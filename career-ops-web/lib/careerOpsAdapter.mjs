@@ -1,14 +1,21 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { validateJobUrl } from './urlSafety.mjs';
 
+const APP_ROOT = process.cwd();
 const ROOT = resolve(process.env.CAREER_OPS_PATH || join(process.cwd(), '..', 'Career-Ops'));
 const JDS_DIR = join(ROOT, 'jds');
 const LOG_DIR = join(ROOT, 'webapp', 'storage', 'logs');
 const OUTPUT_DIR = join(ROOT, 'output');
+const CACHE_DIR = join(APP_ROOT, 'data', 'cache');
+const JD_CACHE_DIR = join(CACHE_DIR, 'job-descriptions');
+const GEMINI_CACHE_DIR = join(CACHE_DIR, 'gemini-evaluations');
 const DEFAULT_TIMEOUT_MS = Number(process.env.CAREER_OPS_TIMEOUT_MS || 300000);
+const JD_CACHE_TTL_MS = Number(process.env.JD_CACHE_TTL_MS || 7 * 24 * 60 * 60 * 1000);
+const GEMINI_CACHE_TTL_MS = Number(process.env.GEMINI_CACHE_TTL_MS || 14 * 24 * 60 * 60 * 1000);
 const RESUME_QA_STOP_WORDS = new Set([
   'from', 'with', 'that', 'this', 'into', 'used', 'using', 'data', 'work', 'role',
   'support', 'supported', 'business', 'technical', 'project', 'systems', 'source',
@@ -115,8 +122,19 @@ async function resolveJobDescription(jobDescription, jobUrl) {
   if (jobDescription && jobDescription.trim()) return jobDescription.trim();
   if (!jobUrl) return '';
 
+  const cacheKey = cacheKeyFor('jd', jobUrl);
+  const cached = readCacheRecord(JD_CACHE_DIR, cacheKey, JD_CACHE_TTL_MS);
+  if (cached?.text && String(cached.text).length >= 80) return cached.text;
+
   const atsText = await tryAtsApi(jobUrl).catch(() => '');
-  if (atsText) return atsText;
+  if (atsText) {
+    writeCacheRecord(JD_CACHE_DIR, cacheKey, {
+      source: 'ats',
+      jobUrl,
+      text: atsText,
+    });
+    return atsText;
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
@@ -124,7 +142,15 @@ async function resolveJobDescription(jobDescription, jobUrl) {
     const res = await safeFetch(jobUrl, { signal: controller.signal });
     if (!res.ok) throw new Error(jobPageFetchError(res.status));
     const html = await res.text();
-    return htmlToText(html).slice(0, 30000);
+    const text = htmlToText(html).slice(0, 30000);
+    if (text.length >= 80) {
+      writeCacheRecord(JD_CACHE_DIR, cacheKey, {
+        source: 'page',
+        jobUrl,
+        text,
+      });
+    }
+    return text;
   } finally {
     clearTimeout(timer);
   }
@@ -298,6 +324,23 @@ async function safeFetch(url, options = {}, redirectCount = 0) {
 
 async function runGeminiEvaluator(jdPath, runId) {
   const before = Date.now();
+  const jdText = existsSync(jdPath) ? readFileSync(jdPath, 'utf-8') : '';
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+  const cacheKey = cacheKeyFor('gemini-eval', `${model}\n${jdText}`);
+  const cached = readGeminiEvalCache(cacheKey);
+  if (cached) {
+    const logPath = join(LOG_DIR, `${runId}.log`);
+    writeFileSync(logPath, `CACHE HIT: reused Gemini evaluation ${cacheKey}\nREPORT: ${cached.reportPath}\n`, 'utf-8');
+    return {
+      ...cached.summary,
+      reportPath: cached.reportPath,
+      stdout: `Reused cached Gemini evaluation for this exact job description. Cache key: ${cacheKey}`,
+      stderr: '',
+      logPath,
+      cacheHit: true,
+    };
+  }
+
   if (!process.env.GEMINI_API_KEY) {
     const message = 'GEMINI_API_KEY is not configured. Created a local fallback report instead.';
     const reportPath = createFallbackReport(jdPath, message);
@@ -330,9 +373,18 @@ async function runGeminiEvaluator(jdPath, runId) {
     throw new Error(stderr.trim() || stdout.trim() || `Career-Ops evaluator exited with code ${code}`);
   }
 
+  const reportPath = findNewestReport(before);
+  if (reportPath) {
+    writeGeminiEvalCache(cacheKey, {
+      reportPath,
+      summary: parseEvaluatorStdout(stdout),
+      model,
+    });
+  }
+
   return {
     ...parseEvaluatorStdout(stdout),
-    reportPath: findNewestReport(before),
+    reportPath,
     stdout,
     stderr,
     logPath,
@@ -373,6 +425,72 @@ function parseEvaluatorStdout(stdout) {
     title: get('ROLE'),
     score: Number(get('SCORE')) || undefined,
   };
+}
+
+function cacheKeyFor(prefix, value) {
+  return `${prefix}-${createHash('sha256').update(String(value || '')).digest('hex').slice(0, 24)}`;
+}
+
+function readCacheRecord(dir, key, ttlMs = 0) {
+  const path = join(dir, `${key}.json`);
+  if (!existsSync(path)) return null;
+  try {
+    const stat = statSync(path);
+    if (ttlMs > 0 && Date.now() - stat.mtimeMs > ttlMs) return null;
+    const record = JSON.parse(readFileSync(path, 'utf-8'));
+    if (!record || typeof record !== 'object') return null;
+    return record;
+  } catch {
+    return null;
+  }
+}
+
+function writeCacheRecord(dir, key, record) {
+  try {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, `${key}.json`), `${JSON.stringify({
+      ...record,
+      cacheKey: key,
+      cachedAt: new Date().toISOString(),
+    }, null, 2)}\n`, 'utf-8');
+  } catch {
+    // Cache writes should never block the job workflow.
+  }
+}
+
+function readGeminiEvalCache(key) {
+  const record = readCacheRecord(GEMINI_CACHE_DIR, key, GEMINI_CACHE_TTL_MS);
+  if (!record?.reportRelPath) return null;
+  const reportPath = resolve(ROOT, record.reportRelPath);
+  if (!reportPath.startsWith(ROOT) || !existsSync(reportPath)) return null;
+  return {
+    reportPath,
+    summary: record.summary || {},
+  };
+}
+
+function writeGeminiEvalCache(key, { reportPath, summary, model }) {
+  if (!reportPath || !existsSync(reportPath)) return;
+  let reportRelPath = relative(ROOT, reportPath);
+  const sourcePath = resolve(reportPath);
+  if (!sourcePath.startsWith(ROOT)) return;
+
+  try {
+    const cachedReportName = `webapp-cache-${key}.md`;
+    const cachedReportPath = join(LOG_DIR, 'cache-reports', cachedReportName);
+    mkdirSync(dirname(cachedReportPath), { recursive: true });
+    copyFileSync(sourcePath, cachedReportPath);
+    reportRelPath = relative(ROOT, cachedReportPath);
+  } catch {
+    // If the report copy fails, keep the original report path while it exists.
+  }
+
+  writeCacheRecord(GEMINI_CACHE_DIR, key, {
+    type: 'gemini-evaluation',
+    model,
+    reportRelPath,
+    summary,
+  });
 }
 
 function firstUseful(...values) {

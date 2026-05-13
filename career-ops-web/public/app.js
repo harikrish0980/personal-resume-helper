@@ -772,6 +772,7 @@ async function loadHealth() {
     <div class="list-row"><strong>Resume Snapshots</strong><span>${escapeHtml(String(health.resumeSnapshots || 0))}</span></div>
     <div class="list-row"><strong>Gemini API</strong><span>${health.geminiConfigured ? 'Configured' : 'Not configured; fallback analysis enabled'}</span></div>
     <div class="list-row"><strong>Gemini Model</strong><span>${escapeHtml(health.geminiModel || 'not set')}</span></div>
+    <div class="list-row"><strong>Local Cache</strong><span>${escapeHtml(`${health.localCaches?.jobDescriptions || 0} JDs, ${health.localCaches?.geminiEvaluations || 0} Gemini evaluations`)}</span></div>
     <div class="list-row"><strong>Local AI Scraper</strong><span>${escapeHtml(localAi.message || 'Not checked')}</span></div>
     <div class="list-row"><strong>Ollama</strong><span>${localAi.ollamaReachable ? 'Reachable' : 'Not reachable'}${localAi.ollamaModel ? ` - ${escapeHtml(localAi.ollamaModel)}` : ''}</span></div>
     <div class="list-row"><strong>ScrapeGraph Cloud</strong><span>${escapeHtml(cloudAi.message || 'Not configured')} ${cloudAi.configured ? '- job page only' : ''}</span></div>

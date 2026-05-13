@@ -1201,9 +1201,22 @@ async function getHealth() {
     resumeSnapshots: (state.resumeSnapshots || []).length,
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
     geminiModel: process.env.GEMINI_MODEL,
+    localCaches: {
+      jobDescriptions: safeCountFiles(join(APP_ROOT, 'data', 'cache', 'job-descriptions')),
+      geminiEvaluations: safeCountFiles(join(APP_ROOT, 'data', 'cache', 'gemini-evaluations')),
+      note: 'Private local cache used to reduce repeated fetches and Gemini token usage.',
+    },
     providers,
     required: required.map((file) => ({ file, exists: existsSync(join(CAREER_OPS_ROOT, file)) })),
   };
+}
+
+function safeCountFiles(dir) {
+  try {
+    return readdirSync(dir).filter((name) => name.endsWith('.json')).length;
+  } catch {
+    return 0;
+  }
 }
 
 async function providerHealth() {
