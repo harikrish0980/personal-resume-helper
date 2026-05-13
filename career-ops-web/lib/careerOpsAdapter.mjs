@@ -9,6 +9,11 @@ const JDS_DIR = join(ROOT, 'jds');
 const LOG_DIR = join(ROOT, 'webapp', 'storage', 'logs');
 const OUTPUT_DIR = join(ROOT, 'output');
 const DEFAULT_TIMEOUT_MS = Number(process.env.CAREER_OPS_TIMEOUT_MS || 300000);
+const RESUME_QA_STOP_WORDS = new Set([
+  'from', 'with', 'that', 'this', 'into', 'used', 'using', 'data', 'work', 'role',
+  'support', 'supported', 'business', 'technical', 'project', 'systems', 'source',
+  'sources', 'reporting', 'analysis', 'analytics', 'datasets', 'reliable',
+]);
 const KNOWN_COMPANY_ATS_WRAPPERS = [
   {
     hostnames: ['beyondtrust.com', 'www.beyondtrust.com'],
@@ -911,12 +916,18 @@ function inferNaturalSummarySentence(targetText) {
 function enrichExperience(experience, result, context) {
   const terms = resumeTerms(result, context);
   return experience.map((job, index) => {
-    const extra = digestBulletsForCompany(job.company, context.articleDigest);
-    const combined = dedupeBullets([...(job.bullets || []), ...extra]);
+    const sourceBullets = job.bullets || [];
+    const digestBullets = digestBulletsForCompany(job.company, context.articleDigest);
     const limit = bulletLimitForJob(job, index);
+    const digestLimit = digestBulletLimitForJob(job, index);
+    const selectedDigest = rankBullets(digestBullets, terms)
+      .filter((bullet) => scoreBullet(bullet, terms.map((term) => term.toLowerCase())) > 0)
+      .slice(0, digestLimit);
+    const selectedSource = rankBullets(sourceBullets, terms);
+    const combined = dedupeBullets([...selectedDigest, ...selectedSource]);
     return {
       ...job,
-      bullets: rankBullets(combined, terms).slice(0, limit),
+      bullets: combined.slice(0, limit),
     };
   });
 }
@@ -927,6 +938,14 @@ function bulletLimitForJob(job, index) {
   if (company.includes('t-mobile')) return 5;
   if (company.includes('citibank')) return 4;
   return 3;
+}
+
+function digestBulletLimitForJob(job, index) {
+  const company = String(job.company || '').toLowerCase();
+  if (index === 0 || company.includes('charter')) return 3;
+  if (company.includes('t-mobile')) return 2;
+  if (company.includes('citibank')) return 2;
+  return 1;
 }
 
 function resumeTerms(result, context) {
@@ -951,7 +970,8 @@ function buildResumeTailoringQa(html, result, context = {}) {
   const matchedTerms = requiredTerms.filter((term) => termMatches(resumeText, term));
   const missingTerms = requiredTerms.filter((term) => !termMatches(resumeText, term)).slice(0, 8);
   const digestBullets = digestBulletsForQa(context.articleDigest);
-  const usedDigestBullets = digestBullets.filter((bullet) => termMatches(resumeText, normalizeForMatch(bullet).slice(0, 80))).slice(0, 8);
+  const articleDigestCandidateCount = digestBullets.length;
+  const usedDigestBullets = findUsedDigestBullets(resumeText, digestBullets).slice(0, 8);
   const articleDigestBulletCount = usedDigestBullets.length;
   const articleDigestUsed = articleDigestBulletCount > 0;
   const coverage = requiredTerms.length ? matchedTerms.length / requiredTerms.length : 1;
@@ -968,7 +988,7 @@ function buildResumeTailoringQa(html, result, context = {}) {
     `JD keyword coverage: ${matchedTerms.length}/${requiredTerms.length || 0}`,
     articleDigestUsed
       ? `article-digest.md contributed ${articleDigestBulletCount} selected resume bullet${articleDigestBulletCount === 1 ? '' : 's'}`
-      : 'No article-digest.md bullets were selected for this resume',
+      : `No article-digest.md bullets were selected for this resume (${articleDigestCandidateCount} candidate bullets reviewed)`,
     missingTerms.length
       ? `Review missing JD terms: ${missingTerms.join(', ')}`
       : 'No major JD terms missing from the resume text',
@@ -982,6 +1002,7 @@ function buildResumeTailoringQa(html, result, context = {}) {
     matchedTerms: matchedTerms.slice(0, 12),
     missingTerms,
     articleDigestUsed,
+    articleDigestCandidateCount,
     articleDigestBulletCount,
     usedDigestBullets,
     suspiciousPhrases,
@@ -1014,6 +1035,24 @@ function digestBulletsForQa(articleDigest = '') {
     .filter((line) => line.startsWith('*'))
     .map((line) => line.replace(/^\*\s*/, '').replace(/\*\*/g, '').trim())
     .filter(isResumeQualityBullet);
+}
+
+function findUsedDigestBullets(resumeText, digestBullets = []) {
+  const normalizedResume = normalizeForMatch(resumeText);
+  return digestBullets.filter((bullet) => digestBulletAppearsInResume(normalizedResume, bullet));
+}
+
+function digestBulletAppearsInResume(normalizedResume, bullet) {
+  const normalizedBullet = normalizeForMatch(bullet);
+  if (!normalizedResume || !normalizedBullet) return false;
+  if (normalizedResume.includes(normalizedBullet.slice(0, 100))) return true;
+  const words = normalizedBullet
+    .split(/\s+/)
+    .filter((word) => word.length >= 4 && !RESUME_QA_STOP_WORDS.has(word))
+    .slice(0, 18);
+  if (words.length < 5) return false;
+  const hits = words.filter((word) => normalizedResume.includes(word)).length;
+  return hits >= Math.min(8, Math.ceil(words.length * 0.6));
 }
 
 function findSuspiciousResumePhrases(text) {

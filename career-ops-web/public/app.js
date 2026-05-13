@@ -1189,7 +1189,7 @@ function renderResumeQa(qa) {
     <div class="metric-grid">
       <article class="metric-card"><span>Resume QA</span><strong>${escapeHtml(String(qa.score ?? 0))}/100</strong></article>
       <article class="metric-card"><span>Status</span><strong>${escapeHtml(label)}</strong></article>
-      <article class="metric-card"><span>Digest Points</span><strong>${escapeHtml(String(qa.articleDigestBulletCount || 0))}</strong></article>
+      <article class="metric-card"><span>Digest Points</span><strong>${escapeHtml(`${qa.articleDigestBulletCount || 0}/${qa.articleDigestCandidateCount || 0}`)}</strong></article>
     </div>
     ${qa.summary ? `<p class="muted">${escapeHtml(qa.summary)}</p>` : ''}
     ${renderTags('Resume Matched JD Terms', qa.matchedTerms)}
