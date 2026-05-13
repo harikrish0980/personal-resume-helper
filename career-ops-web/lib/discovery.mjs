@@ -70,7 +70,7 @@ const DEFAULT_SOURCES = [
     category: 'Structured Board',
     trustLevel: 'Medium',
     automation: 'Searches public remote job API',
-    enabled: true,
+    enabled: false,
     limit: 20,
     notes: 'Free public remote jobs API with keyword search, salary, seniority, and application links.',
   },
@@ -81,7 +81,7 @@ const DEFAULT_SOURCES = [
     category: 'Structured Board',
     trustLevel: 'Medium',
     automation: 'Searches public remote job API',
-    enabled: true,
+    enabled: false,
     limit: 30,
     notes: 'Free public remote job API with keyword filtering. Results are filtered by match score before display.',
   },
@@ -262,9 +262,8 @@ export async function runDiscovery({ sources, profilePreferences, existingJobs =
     }
   }
 
-  const existing = Array.isArray(existingJobs) ? existingJobs : [];
   return {
-    discoveredJobs: dedupeIncoming(discoveredJobs),
+    discoveredJobs: dedupeIncoming(rankDiscoveredJobs(discoveredJobs)),
     sourceResults,
     stats: summarizeDiscovery(sourceResults),
     criteria,
@@ -360,6 +359,27 @@ function dedupeIncoming(discoveredJobs) {
     result.push(job);
   }
   return result;
+}
+
+function rankDiscoveredJobs(discoveredJobs = []) {
+  return [...discoveredJobs].sort((a, b) => {
+    const trustDelta = sourceTrustRank(b.sourceTrust) - sourceTrustRank(a.sourceTrust);
+    if (trustDelta) return trustDelta;
+    const directDelta = Number(Boolean(b.directApply)) - Number(Boolean(a.directApply));
+    if (directDelta) return directDelta;
+    const scoreDelta = Number(b.quickScore || 0) - Number(a.quickScore || 0);
+    if (scoreDelta) return scoreDelta;
+    return Date.parse(b.postedAt || b.lastSeenAt || '') - Date.parse(a.postedAt || a.lastSeenAt || '');
+  });
+}
+
+function sourceTrustRank(value = '') {
+  const text = normalizedText(value);
+  if (text.includes('high')) return 3;
+  if (text.includes('medium')) return 2;
+  if (text.includes('review')) return 1;
+  if (text.includes('low')) return 0;
+  return 1;
 }
 
 function discoveryDescriptionKey(job = {}) {
@@ -964,14 +984,14 @@ function normalizeJob(raw, source, profilePreferences, criteria) {
   job.missingSkills = score.missingSkills;
   job.matchScoreFactors = score.factors;
   job.semanticScore = score.semanticScore;
-  job.discoveryScoreVersion = 'phase2-hybrid-v3';
+  job.discoveryScoreVersion = 'phase2-hybrid-v4';
   job.scoreVersion = job.discoveryScoreVersion;
   if (['scrapegraph_local', 'scrapegraph_cloud'].includes(job.sourceType)) {
-    job.discoveryScoreVersion = 'phase2-hybrid-ai-v3';
+    job.discoveryScoreVersion = 'phase2-hybrid-ai-v4';
     job.scoreVersion = job.discoveryScoreVersion;
     job.matchReasons = uniqueTerms(['AI extracted; review original page', ...job.matchReasons]).slice(0, 6);
   }
-  job.matchBucket = bucketForScore(score.score);
+  job.matchBucket = bucketForScore(score.score, job, criteria, score);
   job.summary = buildDiscoverySummary(job);
   return job;
 }
@@ -1123,8 +1143,15 @@ function scoreJob(job, profilePreferences = {}, criteria = {}) {
   };
 }
 
-function bucketForScore(score) {
-  if (score >= 80) return 'strong';
+function bucketForScore(score, job = {}, criteria = {}, scoring = {}) {
+  const factors = scoring.factors || {};
+  const hasResumeEvidence = !criteria.resumeText
+    || Number(factors.skills || 0) >= 8
+    || Number(factors.semantic || 0) >= 10
+    || (Array.isArray(scoring.matchedSkills) && scoring.matchedSkills.length >= 2);
+  const hasRoleEvidence = Number(factors.role || 0) >= 20;
+  const sourceIsReviewOnly = /review|required/i.test(String(job.sourceTrust || ''));
+  if (score >= 82 && hasRoleEvidence && hasResumeEvidence && !sourceIsReviewOnly) return 'strong';
   if (score >= 55) return 'maybe';
   if (score < 35) return 'skipped';
   return 'new';
@@ -1211,7 +1238,16 @@ function isQualifiedDiscoveryJob(job, criteria) {
   if (!isEmploymentCompatible(job, criteria)) return false;
   if (!isSponsorshipCompatible(job, criteria)) return false;
   if (!criteria.includeLowerMatches && Number(job.quickScore || 0) < Number(criteria.minScore || 80)) return false;
+  if (Number(criteria.minScore || 80) >= 80 && job.matchBucket !== 'strong' && job.matchBucket !== 'maybe') return false;
+  if (Number(criteria.minScore || 80) >= 80 && criteria.resumeText && !hasResumeEvidenceForStrongMatch(job)) return false;
   return true;
+}
+
+function hasResumeEvidenceForStrongMatch(job = {}) {
+  const matched = Array.isArray(job.matchedSkills) ? job.matchedSkills.length : 0;
+  const semantic = Number(job.semanticScore || 0);
+  const skillFactor = Number(job.matchScoreFactors?.skills || 0);
+  return matched >= 2 || semantic >= 10 || skillFactor >= 10;
 }
 
 function isLocationCompatible(job, criteria) {

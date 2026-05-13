@@ -55,6 +55,7 @@ server.listen(PORT, HOST, () => {
   console.log(`Career-Ops Web App running at http://${HOST}:${PORT}`);
 });
 
+scrubStoredPrivateDiscoveryCriteria();
 startDailyDiscoveryScheduler();
 
 function isAllowedHost(hostHeader = '') {
@@ -674,6 +675,26 @@ function sanitizeDiscoveryCriteria(criteria = {}) {
     ...rest,
     resumeTextLength: resumeText ? String(resumeText).length : criteria.resumeTextLength || 0,
   };
+}
+
+function scrubStoredPrivateDiscoveryCriteria() {
+  try {
+    let changed = false;
+    updateState((state) => {
+      for (const run of state.discoveryRuns || []) {
+        if (run.criteria?.resumeText) {
+          run.criteria = sanitizeDiscoveryCriteria(run.criteria);
+          changed = true;
+        }
+      }
+      if (changed) {
+        state.privacyCleanedAt = new Date().toISOString();
+      }
+      return changed;
+    });
+  } catch (error) {
+    console.warn(`State privacy scrub skipped: ${error.message}`);
+  }
 }
 
 function redactStateForExport(state = {}) {

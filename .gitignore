@@ -16,6 +16,8 @@ career-ops-web/.env
 career-ops-web/node_modules/
 career-ops-web/.playwright-cli/
 career-ops-web/node-write-test.txt
+graphify-out/
+project-map/
 career-ops-web/tools/__pycache__/
 
 # Private Career-Ops workspace data

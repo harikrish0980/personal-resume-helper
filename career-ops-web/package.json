@@ -7,7 +7,7 @@
   "scripts": {
     "web": "node server.mjs",
     "start": "node server.mjs",
-    "check": "node --check server.mjs && node --check lib/careerOpsAdapter.mjs && node --check public/app.js"
+    "check": "node --check server.mjs && node --check lib/careerOpsAdapter.mjs && node --check lib/discovery.mjs && node --check lib/store.mjs && node --check lib/urlSafety.mjs && node --check public/app.js"
   },
   "dependencies": {}
 }

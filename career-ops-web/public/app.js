@@ -249,9 +249,21 @@ async function renderRun(runId) {
 
 function renderDashboard() {
   document.getElementById('metric-runs').textContent = state.runs.filter((run) => !run.hidden).length;
-  document.getElementById('metric-recommended').textContent = analyzedJobs().filter((job) => Number(job.score) >= 4).length;
-  document.getElementById('metric-applications').textContent = state.applications.length + state.tracker.length;
+  document.getElementById('metric-recommended').textContent = discoveryJobs().filter((job) => jobBucket(job) === 'strong').length;
+  document.getElementById('metric-needs-review').textContent = reviewNeededCount();
+  document.getElementById('metric-followups').textContent = followupsDue().length;
   document.getElementById('metric-documents').textContent = state.documents.length;
+
+  const nextActions = dashboardNextActions();
+  document.getElementById('next-actions').innerHTML = nextActions.map((item) => `
+    <div class="list-row">
+      <div>
+        <strong>${escapeHtml(item.title)}</strong>
+        <div class="muted">${escapeHtml(item.detail)}</div>
+      </div>
+      <button class="secondary-btn" onclick="${item.runId ? `showRun('${item.runId}')` : `routeTo('${item.route}')`}">${escapeHtml(item.action)}</button>
+    </div>
+  `).join('') || '<p class="muted">You are clear for now. Run Discovery or add a job when ready.</p>';
 
   const rows = analyzedJobs().slice(0, 8).map((job) => `
     <div class="list-row">
@@ -263,6 +275,78 @@ function renderDashboard() {
     </div>
   `).join('');
   document.getElementById('recent-runs').innerHTML = rows || '<p class="muted">No runs yet. Add a job to start.</p>';
+}
+
+function dashboardNextActions() {
+  const actions = [];
+  const strong = discoveryJobs().filter((job) => jobBucket(job) === 'strong').slice(0, 1);
+  const needsReview = state.runs.find((run) => run.result?.resumeQa?.status && !/strong|ready/i.test(run.result.resumeQa.status));
+  const due = followupsDue()[0];
+  const failed = state.runs.find((run) => run.status === 'failed' && !run.hidden);
+  if (strong.length) {
+    actions.push({
+      title: `${strong[0].resolvedCompany || strong[0].company || 'Company'} - ${strong[0].resolvedTitle || strong[0].title || 'Role'}`,
+      detail: 'Strong Discovery match is ready to analyze.',
+      route: 'discovery',
+      action: 'Review',
+    });
+  }
+  if (needsReview) {
+    actions.push({
+      title: 'Resume QA needs review',
+      detail: needsReview.result?.title ? `${needsReview.result.title} at ${needsReview.result.company || 'company'}` : 'A tailored resume needs a manual check.',
+      route: 'run',
+      runId: needsReview.id,
+      action: 'Open QA',
+    });
+  }
+  if (due) {
+    actions.push({
+      title: `Follow up: ${due.company || 'Application'}`,
+      detail: [due.title, shortDate(due.nextFollowUpAt)].filter(Boolean).join(' - '),
+      route: 'applications',
+      action: 'Track',
+    });
+  }
+  if (failed) {
+    actions.push({
+      title: 'Run failed',
+      detail: failed.errorMessage || 'Open the run detail for the friendly error and retry path.',
+      route: 'run',
+      runId: failed.id,
+      action: 'Fix',
+    });
+  }
+  if (!actions.length && !state.runs.length) {
+    actions.push({
+      title: 'Start with one job',
+      detail: 'Paste a job link or description and generate a tailored resume/report.',
+      route: 'add',
+      action: 'Add Job',
+    });
+  }
+  return actions.slice(0, 4);
+}
+
+function reviewNeededCount() {
+  return state.runs.filter((run) => {
+    const qa = run.result?.resumeQa;
+    return qa && !/strong_match|ready/i.test(String(qa.status || ''));
+  }).length;
+}
+
+function followupsDue() {
+  const now = Date.now();
+  const apps = [...state.applications, ...state.tracker.map((row) => ({
+    id: `tracker-${row.number}`,
+    company: row.company,
+    title: row.role,
+    nextFollowUpAt: row.overrideNextFollowUpAt,
+  }))];
+  return apps.filter((app) => {
+    const due = Date.parse(app.nextFollowUpAt || '');
+    return Number.isFinite(due) && due <= now;
+  });
 }
 
 function renderJobs() {
@@ -347,6 +431,8 @@ function renderDiscoveryJobs() {
       ${job.matchReasons?.length ? `<div class="mini-meta">${job.matchReasons.slice(0, 4).map((item) => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
       ${job.extractionWarnings?.length ? `<div class="mini-meta">${job.extractionWarnings.slice(0, 3).map((item) => `<span>${escapeHtml(item)}</span>`).join('')}</div>` : ''}
       ${job.matchedSkills?.length ? `<div class="tags compact-tags">${job.matchedSkills.slice(0, 8).map((item) => `<span class="tag">${escapeHtml(item)}</span>`).join('')}</div>` : ''}
+      ${job.missingSkills?.length ? `<div class="mini-meta"><span>Missing: ${escapeHtml(job.missingSkills.slice(0, 6).join(', '))}</span></div>` : ''}
+      ${job.userFeedback?.action ? `<div class="mini-meta"><span>Your signal: ${escapeHtml(statusLabel(job.userFeedback.action) || job.userFeedback.action)}</span></div>` : ''}
       <div class="actions">
         <button onclick="markDiscoveryJob('${job.id}', 'save')">Save</button>
         <button onclick="markDiscoveryJob('${job.id}', 'interested')">Interested</button>
@@ -1147,7 +1233,10 @@ function statusLabel(status = '') {
     resume_ready: 'Resume Ready',
     needs_review: 'Needs Review',
     saved: 'Saved',
+    save: 'Saved',
     interested: 'Interested',
+    hide_company: 'Hidden company',
+    hide_similar_title: 'Hidden similar title',
     discovered: 'Discovered',
     skipped: 'Skipped',
     rejected: 'Rejected',

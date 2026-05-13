@@ -47,9 +47,17 @@
       <section id="dashboard" class="page active">
         <div class="metric-grid">
           <article class="metric-card"><span>Runs</span><strong id="metric-runs">0</strong></article>
-          <article class="metric-card"><span>Recommended</span><strong id="metric-recommended">0</strong></article>
-          <article class="metric-card"><span>Applications</span><strong id="metric-applications">0</strong></article>
+          <article class="metric-card"><span>Strong Matches</span><strong id="metric-recommended">0</strong></article>
+          <article class="metric-card"><span>Needs Review</span><strong id="metric-needs-review">0</strong></article>
+          <article class="metric-card"><span>Follow-ups Due</span><strong id="metric-followups">0</strong></article>
           <article class="metric-card"><span>Documents</span><strong id="metric-documents">0</strong></article>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Next Actions</h2>
+            <button class="secondary-btn" data-route-jump="discovery">Find Matching Jobs</button>
+          </div>
+          <div id="next-actions" class="list"></div>
         </div>
         <div class="panel">
           <div class="panel-head">
