@@ -1,0 +1,37 @@
+# Secrets and local environment
+.env
+*.env
+*.local
+
+# Dependencies and tool caches
+node_modules/
+.playwright-cli/
+__pycache__/
+*.pyc
+
+# Local app state and generated artifacts
+career-ops-web/data/
+career-ops-web/storage/
+career-ops-web/.env
+career-ops-web/node_modules/
+career-ops-web/.playwright-cli/
+career-ops-web/node-write-test.txt
+career-ops-web/tools/__pycache__/
+
+# Private Career-Ops workspace data
+Career-Ops/
+
+# Local extraction/temporary folders
+docx_extract/
+New folder/
+
+# Backups and generated archives
+*.zip
+*.bak
+*.tmp
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
