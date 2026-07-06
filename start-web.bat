@@ -1,19 +1,59 @@
 @echo off
 setlocal
 
-set "APP_ROOT=%~dp0career-ops-web"
-set "CAREER_OPS_PATH=%~dp0Career-Ops"
-set "PORT=3013"
+set "PROJECT_ROOT=%~dp0"
+set "APP_ROOT=%PROJECT_ROOT%career-ops-web"
+set "CAREER_OPS_PATH=%PROJECT_ROOT%Career-Ops"
+set "TEMPLATE_ROOT=%PROJECT_ROOT%templates\Career-Ops"
+if not defined PORT set "PORT=3013"
 if not defined GEMINI_MODEL set "GEMINI_MODEL=gemini-2.5-flash-lite"
 
 set "NODE_EXE=node"
+
+where "%NODE_EXE%" >nul 2>nul
+if errorlevel 1 (
+  echo Node.js was not found.
+  echo Install Node.js 20 or newer, then run this file again.
+  echo https://nodejs.org/
+  pause
+  exit /b 1
+)
+
+if not exist "%APP_ROOT%\server.mjs" (
+  echo Could not find the web app at:
+  echo %APP_ROOT%
+  echo Run this file from the project root folder.
+  pause
+  exit /b 1
+)
+
+if not exist "%CAREER_OPS_PATH%\" (
+  if exist "%TEMPLATE_ROOT%\" (
+    echo Creating private Career-Ops workspace from templates...
+    xcopy "%TEMPLATE_ROOT%" "%CAREER_OPS_PATH%" /E /I /Y >nul
+  ) else (
+    echo Missing private Career-Ops workspace and template folder.
+    echo Expected template:
+    echo %TEMPLATE_ROOT%
+    pause
+    exit /b 1
+  )
+)
+
+if not exist "%APP_ROOT%\.env" (
+  if exist "%APP_ROOT%\.env.example" (
+    echo Creating career-ops-web\.env from .env.example...
+    copy "%APP_ROOT%\.env.example" "%APP_ROOT%\.env" >nul
+    echo Add your GEMINI_API_KEY in career-ops-web\.env for AI evaluation.
+  )
+)
 
 set "EXISTING_PID="
 for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:"127\.0\.0\.1:%PORT% .*LISTENING"') do set "EXISTING_PID=%%P"
 
 if defined EXISTING_PID (
   echo Port %PORT% is already in use by process %EXISTING_PID%.
-  set /p STOP_EXISTING="Stop it and start the latest EaZy Job Apply app from this folder? [Y/N] "
+  set /p STOP_EXISTING="Stop it and start Personal Resume Helper from this folder? [Y/N] "
   if /I "%STOP_EXISTING%"=="Y" (
     powershell -NoProfile -Command "Stop-Process -Id %EXISTING_PID% -Force"
     timeout /t 1 /nobreak >nul
@@ -25,6 +65,7 @@ if defined EXISTING_PID (
 )
 
 cd /d "%APP_ROOT%"
+echo Starting Personal Resume Helper at http://127.0.0.1:%PORT%
 start "" "http://127.0.0.1:%PORT%"
 "%NODE_EXE%" server.mjs
 

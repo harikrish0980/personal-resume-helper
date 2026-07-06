@@ -419,6 +419,10 @@ body.dark .folder-card {
   gap: 16px;
 }
 
+.form-grid > * {
+  min-width: 0;
+}
+
 label {
   display: grid;
   gap: 7px;
@@ -1183,6 +1187,12 @@ button:disabled {
   .file-actions button:hover,
   .compact-source a:hover {
     transform: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 

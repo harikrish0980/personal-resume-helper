@@ -437,7 +437,7 @@ async function runGeminiEvaluator(jdPath, runId) {
     };
   }
 
-  if (!process.env.GEMINI_API_KEY) {
+  if (!hasUsableGeminiApiKey(process.env.GEMINI_API_KEY)) {
     const message = 'GEMINI_API_KEY is not configured. Created a local fallback report instead.';
     const reportPath = createFallbackReport(jdPath, message);
     const logPath = join(LOG_DIR, `${runId}.log`);
@@ -493,6 +493,12 @@ async function runGeminiEvaluator(jdPath, runId) {
     stderr,
     logPath,
   };
+}
+
+function hasUsableGeminiApiKey(value = '') {
+  const key = String(value || '').trim();
+  if (!key) return false;
+  return !/^(your_|replace_|changeme|example_|test_|dummy_|placeholder)/i.test(key);
 }
 
 export function parseCareerOpsReport(reportPath) {

@@ -1921,7 +1921,7 @@ async function getHealth() {
     schemaVersion: state.schemaVersion || 2,
     resumeSnapshots: (state.resumeSnapshots || []).length,
     resumeProfiles: buildResumeProfiles(state).filter((profile) => profile.isEnabled).length,
-    geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
+    geminiConfigured: hasUsableGeminiApiKey(process.env.GEMINI_API_KEY),
     geminiModel: process.env.GEMINI_MODEL,
     localCaches: {
       jobDescriptions: safeCountFiles(join(APP_ROOT, 'data', 'cache', 'job-descriptions')),
@@ -1932,6 +1932,12 @@ async function getHealth() {
     scanner: getScannerHealthSummary(),
     required: required.map((file) => ({ file, exists: existsSync(join(CAREER_OPS_ROOT, file)) })),
   };
+}
+
+function hasUsableGeminiApiKey(value = '') {
+  const key = String(value || '').trim();
+  if (!key) return false;
+  return !/^(your_|replace_|changeme|example_|test_|dummy_|placeholder)/i.test(key);
 }
 
 function safeCountFiles(dir) {
