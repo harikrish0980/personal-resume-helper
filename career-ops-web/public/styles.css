@@ -870,6 +870,44 @@ button:disabled {
   margin-bottom: 12px;
 }
 
+.folder-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.folder-toggle:hover strong {
+  color: var(--primary-strong);
+}
+
+.folder-arrow {
+  width: 18px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.folder-title-block {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.folder-title-block strong,
+.folder-title-block span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-closed .folder-head {
+  margin-bottom: 0;
+}
+
 .folder-icon {
   width: 42px;
   height: 34px;
@@ -1214,4 +1252,106 @@ button:disabled {
   .file-actions {
     flex-wrap: wrap;
   }
+}
+
+.scanner-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow-soft);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+}
+
+.scanner-toolbar input {
+  flex: 2 1 360px;
+}
+
+.scanner-toolbar select {
+  flex: 1 1 180px;
+  min-width: 170px;
+}
+
+.scanner-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.scanner-list {
+  display: grid;
+  gap: 10px;
+}
+
+.scanner-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--glass-readable);
+  box-shadow: var(--glass-shadow-soft);
+  -webkit-backdrop-filter: blur(22px) saturate(1.45);
+  backdrop-filter: blur(22px) saturate(1.45);
+}
+
+.scanner-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.scanner-main {
+  min-width: 0;
+}
+
+.scanner-main p {
+  margin: 7px 0 0;
+}
+
+.scanner-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+  min-width: 220px;
+}
+
+@media (max-width: 760px) {
+  .scanner-row,
+  .scanner-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .scanner-actions {
+    justify-content: flex-start;
+    min-width: 0;
+  }
+}
+
+.scanner-toolbar button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.scanner-row.scanner-stale,
+.scanner-row.scanner-expired,
+.scanner-row.scanner-review_source {
+  opacity: 0.82;
+}
+
+.empty-state {
+  padding: 28px;
+}
+
+.empty-state h2 {
+  margin-top: 0;
 }

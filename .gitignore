@@ -22,7 +22,7 @@ project-map/
 career-ops-web/tools/__pycache__/
 
 # Private Career-Ops workspace data
-Career-Ops/
+/Career-Ops/
 
 # Local extraction/temporary folders
 docx_extract/
@@ -32,6 +32,8 @@ New folder/
 *.zip
 *.bak
 *.tmp
+rollback-backup-*/
+career-ops-web/scripts/
 
 # OS/editor noise
 .DS_Store

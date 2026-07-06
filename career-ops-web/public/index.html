@@ -27,7 +27,7 @@
         <button data-route="dashboard" class="active">Dashboard</button>
         <button data-route="add">Add Job</button>
         <button data-route="jobs">Analyzed Jobs</button>
-        <button data-route="discovery">Discovery Jobs</button>
+        <button data-route="scanner">Scanner Inbox</button>
         <button data-route="applications">Applications</button>
         <button data-route="documents">Documents</button>
         <button data-route="profile">Profile & Resume</button>
@@ -47,7 +47,7 @@
       <section id="dashboard" class="page active">
         <div class="metric-grid">
           <article class="metric-card"><span>Runs</span><strong id="metric-runs">0</strong></article>
-          <article class="metric-card"><span>Strong Matches</span><strong id="metric-recommended">0</strong></article>
+          <article class="metric-card"><span>Resume Ready</span><strong id="metric-resume-ready">0</strong></article>
           <article class="metric-card"><span>Needs Review</span><strong id="metric-needs-review">0</strong></article>
           <article class="metric-card"><span>Follow-ups Due</span><strong id="metric-followups">0</strong></article>
           <article class="metric-card"><span>Documents</span><strong id="metric-documents">0</strong></article>
@@ -55,7 +55,7 @@
         <div class="panel">
           <div class="panel-head">
             <h2>Next Actions</h2>
-            <button class="secondary-btn" data-route-jump="discovery">Find Matching Jobs</button>
+            <button class="secondary-btn" data-route-jump="add">Add Job</button>
           </div>
           <div id="next-actions" class="list"></div>
         </div>
@@ -78,6 +78,7 @@
             <label>Job Description
               <textarea id="job-description" rows="10" placeholder="Paste the job description if the page requires login or is hard to extract."></textarea>
             </label>
+            <p class="hint" id="add-job-validation">Provide a job link, a pasted job description, or both.</p>
             <label>Notes
               <textarea id="job-notes" rows="4" placeholder="Priority, recruiter info, concerns, or reminders."></textarea>
             </label>
@@ -85,12 +86,15 @@
           <div class="panel compact">
             <h2>Run Options</h2>
             <label class="check"><input id="generate-resume" type="checkbox" checked> Generate resume PDF</label>
+            <label>Resume Profile
+              <select id="resume-profile-select"></select>
+            </label>
             <div class="option-group" aria-label="Resume PDF type">
               <div class="option-label">Resume PDF type</div>
               <label class="check option-check"><input name="resume-mode" type="radio" value="one_page"> 1-page ATS resume</label>
               <label class="check option-check"><input name="resume-mode" type="radio" value="two_page" checked> 2-page detailed resume</label>
             </div>
-            <label class="check"><input id="generate-cover-letter" type="checkbox"> Generate cover letter later</label>
+            <label class="check"><input id="generate-cover-letter" type="checkbox"> Generate cover letter</label>
             <label class="check"><input id="save-to-tracker" type="checkbox" checked> Save to tracker after analysis</label>
             <button class="primary-btn" type="submit">Analyze Job</button>
             <p class="hint">The request returns immediately. The worker runs Career-Ops in the background.</p>
@@ -114,106 +118,31 @@
         <div id="job-board" class="card-grid"></div>
       </section>
 
-      <section id="discovery" class="page">
-        <div class="panel discovery-header">
-          <div class="panel-head">
-            <div>
-              <h2>Find Matching Jobs</h2>
-              <p class="muted" id="discovery-summary">Search direct company and job-board sources, match against your resume, then analyze only the best jobs.</p>
-            </div>
-          </div>
-          <div class="discovery-criteria">
-            <label>Target Job
-              <input id="discovery-query" placeholder="Senior Data Engineer">
-            </label>
-            <label>Location
-              <input id="discovery-location" placeholder="United States, Dallas, Remote">
-            </label>
-            <label>Minimum Match
-              <select id="discovery-min-score">
-                <option value="80">4/5+ strong only</option>
-                <option value="90">4.5/5+ best only</option>
-                <option value="70">3.5/5+ review also</option>
-                <option value="50">All possible matches</option>
-              </select>
-            </label>
-            <label>Work Mode
-              <select id="discovery-work-mode">
-                <option value="">Any</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="onsite">Onsite</option>
-                <option value="remote">Remote</option>
-              </select>
-            </label>
-            <label>Job Type
-              <select id="discovery-employment-type">
-                <option value="">Any</option>
-                <option value="full_time">Full-time</option>
-                <option value="contract">Contract</option>
-              </select>
-            </label>
-            <label>Sponsorship
-              <select id="discovery-sponsorship">
-                <option value="">Any</option>
-                <option value="avoid_no_sponsor">Avoid no-sponsorship jobs</option>
-                <option value="sponsor_only">Sponsorship mentioned</option>
-                <option value="no_sponsorship_needed">No sponsorship needed</option>
-              </select>
-            </label>
-            <label>Sources
-              <select id="discovery-source-scope">
-                <option value="balanced">Balanced: company + mixed boards</option>
-                <option value="direct">Direct company ATS only</option>
-                <option value="mixed_boards">Mixed/location job boards</option>
-                <option value="remote_boards">Remote-only boards</option>
-                <option value="local_ai">AI scraper automatic</option>
-                <option value="ai_local_only">Local AI only</option>
-                <option value="ai_cloud_only">Cloud AI only</option>
-                <option value="trusted">All trusted sources</option>
-                <option value="all">All enabled sources</option>
-              </select>
-            </label>
-            <button class="primary-btn fit-btn" id="run-discovery" type="button">Find Jobs by Title</button>
-          </div>
-          <div class="resume-match-box">
-            <div>
-              <h3>Resume Match Input</h3>
-              <p class="muted">Upload or paste your resume, then run resume-based discovery. If Target Job is blank, the app will infer the job family from your resume.</p>
-            </div>
-            <label>Attach Resume
-              <input id="discovery-resume-file" type="file" accept=".txt,.md,.pdf,.doc,.docx">
-            </label>
-            <label class="wide">Resume Text
-              <textarea id="discovery-resume-text" rows="4" placeholder="Paste resume text here, or upload PDF/DOCX/TXT/MD above."></textarea>
-            </label>
-            <button class="primary-btn wide" id="run-discovery-resume" type="button">Find Jobs From Resume</button>
-            <label class="check wide">
-              <input id="persist-discovery-resume" type="checkbox" checked>
-              <span>Save this resume snapshot locally for future Discovery</span>
-            </label>
-            <p class="hint wide" id="discovery-resume-source">Using Career-Ops cv.md until you upload or paste resume text.</p>
-          </div>
-          <div id="discovery-runs" class="list compact-list"></div>
-        </div>
-        <div class="filters">
-          <input id="discovery-search" placeholder="Filter shown discovery jobs">
-          <select id="discovery-bucket-filter">
-            <option value="">All discovery jobs</option>
-            <option value="strong">Strong matches</option>
-            <option value="maybe">Maybe</option>
-            <option value="new">New</option>
-            <option value="skipped">Skipped</option>
+      <section id="scanner" class="page">
+        <div class="scanner-toolbar">
+          <input id="scanner-search" placeholder="Search scanner inbox by title, company, or source">
+          <select id="scanner-status-filter">
+            <option value="ready" selected>Fresh analyzable jobs</option>
+            <option value="stale">Stale pending jobs</option>
+            <option value="review_source">Review/search pages</option>
+            <option value="processed">Processed history</option>
+            <option value="expired">Expired/skipped</option>
+            <option value="">All rows (includes old history)</option>
           </select>
+          <select id="scanner-company-filter"><option value="">All companies</option></select>
+          <select id="scanner-source-filter"><option value="">All sources</option></select>
+          <select id="scanner-location-filter"><option value="">All locations</option></select>
+          <button id="scanner-run-api" type="button">Run API Scanner</button>
+          <button id="scanner-refresh" class="secondary-btn" type="button">Refresh</button>
         </div>
-        <div id="discovery-buckets" class="bucket-strip"></div>
-        <div id="discovery-board" class="card-grid"></div>
+        <div id="scanner-summary" class="scanner-summary"></div>
+        <div id="scanner-list" class="scanner-list"></div>
       </section>
-
       <section id="applications" class="page">
         <div class="board-toolbar">
-          <button class="secondary-btn" id="kanban-left" type="button">Left</button>
+          <button class="secondary-btn" id="kanban-left" type="button">Scroll Left</button>
           <span class="muted">Drag cards between columns to update status.</span>
-          <button class="secondary-btn" id="kanban-right" type="button">Right</button>
+          <button class="secondary-btn" id="kanban-right" type="button">Scroll Right</button>
         </div>
         <div id="kanban" class="kanban"></div>
       </section>
@@ -225,7 +154,9 @@
             <option value="">All document types</option>
             <option value="original_resume">Original resume</option>
             <option value="resume_pdf">Resume PDFs</option>
+            <option value="resume_html">Resume HTML</option>
             <option value="career_ops_report">Reports</option>
+            <option value="resume_pdf_error">PDF error logs</option>
             <option value="cover_letter">Cover letters</option>
           </select>
         </div>
@@ -284,42 +215,13 @@
               <label class="wide">Proof Bank Notes
                 <textarea id="pref-proof-bank" rows="6" placeholder="Reusable achievements, projects, impact metrics, STAR stories."></textarea>
               </label>
-              <label>Default Discovery Role
-                <input id="pref-discovery-query" placeholder="Senior Data Engineer">
-              </label>
-              <label>Default Discovery Location
-                <input id="pref-discovery-location" placeholder="United States">
-              </label>
-              <label>Default Discovery Sources
-                <select id="pref-discovery-source-scope">
-                  <option value="balanced">Balanced</option>
-                  <option value="direct">Direct ATS only</option>
-                  <option value="mixed_boards">Mixed boards</option>
-                  <option value="remote_boards">Remote boards</option>
-                  <option value="local_ai">AI scraper automatic</option>
-                  <option value="ai_local_only">Local AI only</option>
-                  <option value="ai_cloud_only">Cloud AI only</option>
-                </select>
-              </label>
-              <label>Default Minimum Match
-                <select id="pref-discovery-min-score">
-                  <option value="80">4/5+ strong only</option>
-                  <option value="90">4.5/5+ best only</option>
-                  <option value="70">3.5/5+ review also</option>
-                </select>
-              </label>
-              <label class="check wide">
-                <input id="pref-daily-discovery" type="checkbox">
-                <span>Run daily discovery while this local app is open</span>
-              </label>
-              <label class="check wide">
-                <input id="pref-persist-resume-snapshots" type="checkbox" checked>
-                <span>Persist pasted/uploaded Discovery resume snapshots locally</span>
-              </label>
             </div>
           </form>
           <div class="panel">
             <h2>Resume Sources</h2>
+            <label>Preview Resume Profile
+              <select id="profile-resume-select"></select>
+            </label>
             <div id="profile-source-summary" class="source-summary"></div>
           </div>
         </div>
@@ -357,17 +259,6 @@
             <input id="export-redacted" type="checkbox" checked>
             <span>Redact resume snapshots and long private text from exports</span>
           </label>
-        </div>
-        <div class="panel source-manager">
-          <div class="panel-head">
-            <div>
-              <h2>Discovery Sources</h2>
-              <p class="muted">Automated sources import matching jobs. Guided searches help you open trusted boards and analyze specific job links.</p>
-            </div>
-          </div>
-          <div id="automated-sources" class="source-grid"></div>
-          <h3>Guided Job Board Searches</h3>
-          <div id="guided-searches" class="source-grid"></div>
         </div>
       </section>
     </main>
@@ -437,3 +328,4 @@
   <script src="/app.js?v=20260513-discovery-async-v4" type="module"></script>
 </body>
 </html>
+

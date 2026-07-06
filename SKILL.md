@@ -1,23 +1,36 @@
 ---
-name: career-ops-web-builder
-description: Project workflow for building and QA-ing the EaZy Job Apply web app on top of Career-Ops. Use when working in D:\Easy job apply, career-ops-web, or Career-Ops resume/job-analysis workflows.
+name: eazy-job-apply-builder
+description: Project workflow for building, debugging, and QA-ing EaZy Job Apply, the local web app built on a Career-Ops based engine.
 ---
 
-# Career-Ops Web Builder Skill
+# EaZy Job Apply Builder Skill
 
-Use this skill when helping build, debug, or plan the EaZy Job Apply web application that sits on top of the existing Career-Ops CLI project.
+Use this skill when helping build, debug, document, or plan EaZy Job Apply.
 
 ## What This Project Is
 
-EaZy Job Apply is a local web application that wraps the Career-Ops workflow:
+EaZy Job Apply is a local-first web application for job search operations.
 
-1. User pastes a job link or job description.
-2. The app queues a background Career-Ops analysis.
-3. The app generates a report and tailored resume PDF.
-4. The user reviews the output and applies manually.
-5. The app tracks jobs, applications, generated documents, and matching-job discovery.
+Core flow:
 
-Never auto-submit applications. The final apply step is always manual.
+1. User selects a resume profile.
+2. User pastes a job link or full job description.
+3. App queues background analysis.
+4. App generates report, Resume QA, PDF, DOCX, and HTML.
+5. User reviews manually.
+6. User applies manually on the company/ATS site.
+7. App tracks applications, documents, and follow-ups.
+
+Never auto-submit applications. The final apply step is always manual and human-reviewed.
+
+## Naming And Ownership
+
+- Product name: EaZy Job Apply.
+- Current engine/base folder: `Career-Ops`.
+- Treat Career-Ops as the local engine dependency until a planned migration is done.
+- Do not casually rename the `Career-Ops` folder because `CAREER_OPS_PATH`, output paths, scanner files, reports, profile sources, and document links depend on it.
+- User-facing docs/UI should prefer EaZy Job Apply.
+- Internal folder rename should be a separate tested migration.
 
 ## Stack
 
@@ -25,35 +38,31 @@ Never auto-submit applications. The final apply step is always manual.
 |---|---|
 | Backend | Node.js `http` server in `server.mjs` using ES Modules |
 | Frontend | Vanilla JS, HTML, CSS in `public/` |
-| AI / Evaluation | Google Gemini API with graceful local fallback |
-| Resume Source | Markdown/profile files inside `Career-Ops/` |
-| PDF Generation | Web adapter renders Career-Ops resume HTML/PDF with Playwright |
+| AI / Evaluation | Google Gemini API with local fallback |
+| Resume Sources | Markdown profile files inside `Career-Ops/profiles`, each with its own `article-digest.md` |
+| PDF/DOCX | Native local renderer from `careerOpsAdapter.mjs` and `reportlab_resume_pdf.py` |
 | State / Storage | Local JSON through `lib/store.mjs` |
-| Job Discovery | `lib/discovery.mjs` |
-| App Tracking | `lib/tracker.mjs` plus local state |
-| ATS Integration | `lib/careerOpsAdapter.mjs` |
+| Scanner Inbox | Career-Ops pipeline/API rows, not old Discovery Jobs |
+| App Tracking | Local Applications workflow |
 | URL Safety | `lib/urlSafety.mjs` |
 
 ## Project Map
 
-- Web app root: `D:\Easy job apply\career-ops-web`
-- Career-Ops engine root: `D:\Easy job apply\Career-Ops`
-- User documents and planning root: `D:\Easy job apply`
-- Main app URL: `http://localhost:3013`
-- Web app server: `career-ops-web\server.mjs`
+- Root: repository root
+- Web app: `career-ops-web`
+- Engine/private data: `Career-Ops`
+- Main app URL: `http://127.0.0.1:3013`
+- Server: `career-ops-web\server.mjs`
 - Frontend: `career-ops-web\public\index.html`, `public\app.js`, `public\styles.css`
-- Career-Ops adapter: `career-ops-web\lib\careerOpsAdapter.mjs`
-- Discovery logic: `career-ops-web\lib\discovery.mjs`
-- Local state: `career-ops-web\lib\store.mjs`
-- Application tracking: `career-ops-web\lib\tracker.mjs`
-- URL safety: `career-ops-web\lib\urlSafety.mjs`
-- Resume source: `Career-Ops\cv.md`
-- Extra resume context: `Career-Ops\article-digest.md`, `config\profile.yml`, `modes\_profile.md`, `interview-prep\story-bank.md`
+- Adapter: `career-ops-web\lib\careerOpsAdapter.mjs`
+- State: `career-ops-web\lib\store.mjs`
+- Resume profiles: `Career-Ops\profiles`
+- Per-profile digest: `Career-Ops\profiles\<profile>\article-digest.md`
 - Generated output: `Career-Ops\output`
 - Reports: `Career-Ops\reports`
-- Job descriptions: `Career-Ops\jds`
+- Scanner pipeline: `Career-Ops\data\pipeline.md`
 
-Keep new web-app changes in `career-ops-web`. Keep Career-Ops engine changes inside `Career-Ops`.
+Keep web-app changes in `career-ops-web`. Keep engine/profile/output changes inside `Career-Ops`.
 
 ## Environment
 
@@ -61,287 +70,143 @@ Use:
 
 ```env
 GEMINI_API_KEY=your_key_here
-CAREER_OPS_PATH=D:\Easy job apply\Career-Ops
+CAREER_OPS_PATH=..\Career-Ops
 PORT=3013
 ```
 
-Never hardcode API keys. Treat `.env`, resumes, PDFs, reports, and job tracking data as private.
+Never hardcode API keys. Treat `.env`, resumes, PDFs, DOCX files, reports, logs, and application tracking data as private.
 
-## Working Style
+## Working Roles
 
-Think through each change from these roles before implementation:
+Think through meaningful changes from these roles:
 
-- Product Manager: user journey, MVP value, priority, confusion points.
-- Architect: data flow, frontend/backend boundaries, storage model, reliability.
-- Developer: smallest clean implementation matching existing code style.
-- QA: smoke tests, edge cases, failure messages, regression risk.
-- Research: compare with useful patterns from resume analyzers, matchers, ATS/job-discovery apps.
-- UX: simple screens, clear actions, no mixed workflows, no confusing labels.
+- Product Manager: workflow value, MVP scope, confusion points.
+- Architect: data flow, storage, boundaries, reliability.
+- Developer: smallest clean implementation matching the codebase.
+- QA: regression checks, failure cases, smoke tests.
+- Research: compare useful patterns, but avoid copying risky automation.
+- UX: clear screens, obvious actions, no mixed workflows.
 
 Do not stop at a plan when the user clearly wants execution. Implement, test, restart the app if needed, and report what changed.
 
 ## Core Product Rules
 
 - Add Job is for a known job URL or pasted JD.
-- Analyzed Jobs is for jobs already run through Career-Ops.
-- Discovery Jobs is for finding latest relevant jobs before analysis.
-- Applications is for manual apply tracking. The final apply action stays human-reviewed.
-- Documents should clearly separate original resume, tailored resume, report, and cover letter.
-- Keep Discovery Jobs and Analyzed Jobs separate.
-- Avoid cluttered enterprise dashboards; make actions obvious and screens scan-friendly.
+- Resume Profile selector controls which `cv.md` source is used.
+- Analyzed Jobs is for jobs already run through the app.
+- Scanner Inbox is for reviewing saved scanner/API jobs before analysis.
+- Applications is for manual tracking only.
+- Documents should clearly separate resume, report, HTML, DOCX, log, and cover letter.
+- Discovery Jobs is disabled unless explicitly re-designed later.
+- No auto-apply, no logged-in scraping, no cloud upload without a privacy design.
 
-## Pages And Purpose
+## Resume Profile Rules
 
-| Page | Purpose |
-|---|---|
-| Dashboard | Recent runs, metrics, applications, documents, next actions |
-| Add Job | Paste job URL or JD and trigger Career-Ops analysis |
-| Analyzed Jobs | Jobs already processed by Career-Ops |
-| Discovery Jobs | Find new matching jobs before analysis |
-| Applications | Manual application tracking with status workflow |
-| Documents | Generated PDFs, reports, original resume, cover letters later |
-| Profile & Resume | Career-Ops profile and resume source data |
-| Settings | Gemini key status, paths, setup health check |
+Enabled profiles include:
 
-## Add Job Inputs
+- Resume 1
+- Resume 2
+- Resume 3
+- Resume 4
+- Resume 5
+- Resume 6
 
-- Job URL
-- Optional pasted job description
-- Notes
-- Generate resume PDF
-- Resume PDF type:
-  - `1-page ATS resume`
-  - `2-page detailed resume` default
-- Generate cover letter later
-- Save to tracker after analysis
+Rules:
 
-## Resume Rules
+- Summaries use the user's own resume source.
+- Selected profile `cv.md` is the primary source.
+- The selected profile's own `article-digest.md` is the experience bank.
+- Digest bullets are selected only when they match the JD and add value.
+- Do not repeat the same idea or metric in summary and experience.
+- Do not invent unsupported skills.
+- Resume profiles should not borrow unsupported claims from other profiles.
+- Resume QA must show the profile used and selected digest bullets.
 
-Career-Ops web resumes should be generated mainly from:
+## Resume Formatting Rules
 
-- `cv.md`
-- `article-digest.md`
-- `config/profile.yml`
-- `modes/_profile.md`
-- `interview-prep/story-bank.md`
+- Prefer stable formatting over risky keyword highlighting.
+- Inline JD keyword bolding stays disabled unless PDF and DOCX spacing is fully verified.
+- Safe bolding only: section headings, role/company lines, skill labels, project title.
+- No `Core Competencies`.
+- Full LinkedIn URL in header.
+- GitHub only in Project section.
+- Resume file name should stay clean, such as `candidate_resume.pdf`, `.docx`, `.html`.
+- Folder names may include company, title, date, and profile family.
+- Check for joined words: `SQLPython`, `DevelopedPySpark`, `SnowflakeCloud`, `TableauDesktop`.
 
-Do not show `Core Competencies` in generated web resumes.
+## Scanner Inbox Rules
 
-The app supports two resume modes:
-
-- `two_page`: default, detailed resume, keep current template behavior.
-- `one_page`: compact ATS resume, one page only, simple black-and-white format, centered name/contact, section rules, compact skills, focused bullets, education/certifications at end.
-
-For one-page resumes:
-
-- Keep it exactly one Letter page.
-- Prefer ATS-safe structure over decorative design.
-- Use compact, job-relevant bullets.
-- Avoid suspicious AI phrases such as `Focused fit for this role`, `Relevant strengths include`, or `where data engineering overlaps with AI use cases`.
-- Avoid repeating the same metrics in summary and experience.
-- Keep job-specific summary natural and human-sounding.
-- Use active verbs like designed, built, developed, led, optimized, implemented, automated, improved.
-- Avoid generic filler and vague AI-sounding language.
-
-## Discovery Jobs Rules
-
-Discovery should find current, relevant jobs from multiple boards and direct company/ATS pages.
+Scanner Inbox is the safe replacement for old Discovery Jobs.
 
 Preferred flow:
 
-1. User enters target job title and/or uploads/pastes resume.
-2. App infers role family from resume if title is blank.
-3. App searches trusted sources.
-4. App ranks by resume/skills/preferences.
-5. Show only useful matches, ideally 4/5 or stronger by default.
-6. Each result should have a direct company or ATS apply link when possible.
+1. Career-Ops scanner/API writes rows to pipeline/history.
+2. Web app reads saved rows.
+3. Fresh direct ATS/company rows appear first.
+4. User reviews and chooses Analyze, Hide, or Open Link.
+5. Analyze sends the job through Add Job flow.
+6. Final apply remains manual.
 
-Filters to keep or add:
-
-- Role title
-- Location
-- Remote/hybrid/onsite
-- Sponsorship/H1B
-- Full-time/contract
-- Minimum match score
-- Source scope
-
-Do not fill Discovery with random remote jobs. Remote-only sources should be optional, not the default.
+Do not restore old noisy Discovery Jobs without a new relevance plan.
 
 ## Job Analysis Rules
 
-Career-Ops should handle:
+Supported paths:
 
+- Pasted JD fallback
 - Greenhouse
 - Lever
 - Ashby
-- Workday/company career pages
-- Pasted JD fallback
+- Workday CXS/company pages
+- SmartRecruiters and selected public ATS pages
+- Bullhorn public extraction when available; otherwise paste JD
 
-For Workday URLs, use Workday CXS APIs when possible.
-
-If Gemini quota/API fails, show a friendly message and create a useful fallback report when possible. Do not expose long raw quota errors as the primary UI text.
-
-## Gemini Error Handling
-
-- Wrap Gemini calls and parsing in recoverable error handling.
-- On quota/rate-limit/API-key errors, continue with a local fallback report when possible.
-- Log raw technical details to logs, not as the primary UI message.
-- The UI should return quickly after queueing; background work handles analysis.
-- Do not block all progress because Gemini quota is exhausted.
-
-## Frontend UX Rules
-
-- Keep app screens quiet, work-focused, and clear.
-- Do not mix Discovery and Analyzed job flows.
-- Add empty states with a clear next action.
-- Use clear status labels:
-  - Queued
-  - Running
-  - Fetching Job
-  - Analyzing
-  - Generating Resume
-  - Resume Ready
-  - Needs Review
-  - Applied
-  - Rejected
-  - Archived
-- Avoid non-English or garbled text in cards.
-- Do not show raw rubric/report text as a card summary if it reads like an evaluator table.
-
-## Application Status Workflow
-
-Use this status direction:
-
-```text
-Saved -> Analyzing -> Resume Ready -> Applied ->
-Recruiter Screen -> Technical Round -> Final Round ->
-Offer / Rejected / Archived
-```
-
-## Coding Rules
-
-1. Use ES Modules: `import/export`, not `require()`.
-2. Keep the app local-first.
-3. Never auto-apply.
-4. Handle external API failures gracefully.
-5. Syntax check changed JS/MJS files before finishing.
-6. Keep port `3013` unless the user explicitly changes it.
-7. No `Core Competencies` in generated web resumes.
-8. For Workday, try CXS API before generic page scraping.
-9. Avoid unrelated refactors when fixing a targeted issue.
-10. Do not commit or expose private resume/API-key data.
+If Gemini quota/API/local process fails, create a useful fallback report when possible and keep the UI readable.
 
 ## Development Commands
 
-From `D:\Easy job apply\career-ops-web`:
+From `career-ops-web`:
 
 ```powershell
-node --check public\app.js
-node --check server.mjs
-node --check lib\careerOpsAdapter.mjs
+npm run check
 ```
 
-Start the app:
+Start app:
 
 ```powershell
-Start-Process -FilePath 'C:\Users\harik\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' -ArgumentList 'server.mjs' -WorkingDirectory 'D:\Easy job apply\career-ops-web' -WindowStyle Hidden
+Start-Process -FilePath 'node' -ArgumentList 'server.mjs' -WorkingDirectory 'career-ops-web' -WindowStyle Hidden
 ```
 
-Check the port:
+Check port:
 
 ```powershell
 netstat -ano | findstr :3013
 ```
 
-Stop the app:
+Stop app:
 
 ```powershell
 Stop-Process -Id <PID> -Force
 ```
 
-If the server must write into `Career-Ops\jds`, `Career-Ops\reports`, or `Career-Ops\output`, it may need to be started outside the sandbox.
-
 ## Smoke Test Checklist
 
-After any major change:
+After major changes:
 
-1. Run syntax checks.
+1. Run `npm run check`.
 2. Restart server on `3013`.
-3. Open Dashboard and confirm it loads.
-4. Open Add Job and confirm run options are visible.
-5. Run one known Workday/Greenhouse job analysis.
-6. Confirm the run completes or fails with a human-readable message.
-7. Confirm report opens.
-8. Confirm tailored resume PDF opens.
-9. Confirm no `Core Competencies` in web resume.
-10. Confirm no Spanish/garbled snippets in visible cards.
-11. Check Analyzed Jobs.
-12. Check Applications.
-13. Check Documents.
-14. Check Discovery Jobs.
-15. Check Settings.
-
-For one-page resume:
-
-```powershell
-python -c "from pypdf import PdfReader; print(len(PdfReader(r'<PDF_PATH>').pages))"
-```
-
-Expected result: `1`.
-
-## Known Good Test Job
-
-Workday Q2 Data Engineer:
-
-```text
-https://q2ebanking.wd5.myworkdayjobs.com/Q2/job/Cary-North-Carolina/Data-Engineer_REQ-12425?source=LinkedIn
-```
-
-This is useful for testing Workday extraction, job analysis, report generation, and tailored resume PDF generation.
-
-## Phase Notes
-
-Phase 1 is mostly complete:
-
-- Add Job with background Career-Ops runs.
-- Run detail page with report and PDF links.
-- Analyzed Jobs page.
-- Discovery Jobs separated from analyzed jobs.
-- Applications tracker foundation.
-- Documents library foundation.
-- Profile and Settings pages.
-- Workday extraction fix.
-- Resume template cleanup.
-- Removed Core Competencies from web-generated resumes.
-- Improved summary wording and English-only UI behavior.
-- Better labels and statuses.
-
-Phase 2 is in progress:
-
-- Done: resume PDF type setting.
-- Done: one-page ATS resume confirmed working.
-- Next: improve Discovery Jobs relevance.
-- Next: make resume upload/paste the main matching input.
-- Next: add location, remote/hybrid/onsite, sponsorship, contract/full-time filters.
-- Next: strong matches only by default.
-- Next: improve direct apply links.
-- Next: improve Applications workflow.
-- Next: improve document previews and naming.
-- Later: cover letter generation.
-- Later: enterprise-style polish.
-
-## Design Direction
-
-The app should feel like a practical job command center for an IT/data professional:
-
-- Clear workflows.
-- No distractions.
-- Useful status indicators and next actions.
-- Strong document generation.
-- Relevant job discovery, quality over quantity.
-- Manual final apply step always preserved.
-- Reliable fallback behavior on all errors.
+3. Open Dashboard.
+4. Open Add Job and confirm Resume Profile and resume mode controls.
+5. Run one pasted JD analysis.
+6. Confirm Run Detail shows profile, QA, report, PDF, DOCX/HTML where generated.
+7. Confirm no `Core Competencies`.
+8. Confirm no joined words in PDF/DOCX text.
+9. Check Analyzed Jobs.
+10. Check Scanner Inbox.
+11. Check Applications.
+12. Check Documents.
+13. Check Profile & Resume.
+14. Check Settings.
 
 ## Final Response Pattern
 
@@ -351,6 +216,6 @@ Keep final updates short:
 - Where it changed
 - What was tested
 - Any blocker or cleanup note
-- Current app URL if server is running
+- Current app URL if useful
 
-Do not overwhelm the user with raw logs unless they ask.
+Do not paste raw logs unless the user asks.

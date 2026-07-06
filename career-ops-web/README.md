@@ -7,10 +7,10 @@ Local-first web interface for the existing Career-Ops setup.
 From this web app folder:
 
 ```powershell
-cd 'D:\Easy job apply\career-ops-web'
-$env:CAREER_OPS_PATH='D:\Easy job apply\Career-Ops'
+cd 'career-ops-web'
+$env:CAREER_OPS_PATH='..\Career-Ops'
 $env:PORT='3013'
-& 'C:\Users\harik\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe' server.mjs
+node server.mjs
 ```
 
 Then open:
@@ -22,7 +22,7 @@ http://localhost:3013
 Or double-click:
 
 ```text
-D:\Easy job apply\start-web.bat
+start-web.bat
 ```
 
 ## Free API Key
@@ -30,7 +30,7 @@ D:\Easy job apply\start-web.bat
 Create:
 
 ```text
-D:\Easy job apply\career-ops-web\.env
+career-ops-web\.env
 ```
 
 Add:
@@ -38,7 +38,7 @@ Add:
 ```env
 GEMINI_API_KEY=your_google_ai_studio_key_here
 GEMINI_MODEL=gemini-2.5-flash-lite
-CAREER_OPS_PATH=D:\Easy job apply\Career-Ops
+CAREER_OPS_PATH=..\Career-Ops
 PORT=3013
 ```
 

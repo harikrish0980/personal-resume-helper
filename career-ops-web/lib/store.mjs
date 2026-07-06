@@ -1,10 +1,10 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 export const STORE_PATH = join(process.cwd(), 'data', 'state.json');
 
 const initialState = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   runs: [],
   jobs: [],
   jobSources: [],
@@ -13,6 +13,8 @@ const initialState = {
   documents: [],
   events: [],
   resumeSnapshots: [],
+  resumeProfiles: [],
+  defaultResumeProfileId: 'resume-1',
 };
 
 export function ensureStore() {
@@ -38,10 +40,44 @@ export function writeState(state) {
   ensureStore();
   const normalized = normalizeState({ ...initialState, ...state });
   const backupPath = `${STORE_PATH}.bak-${Date.now()}`;
-  if (existsSync(STORE_PATH)) copyFileSync(STORE_PATH, backupPath);
+  if (existsSync(STORE_PATH)) retryFs(() => copyFileSync(STORE_PATH, backupPath));
   const tmpPath = `${STORE_PATH}.${process.pid}.${Date.now()}.tmp`;
   writeFileSync(tmpPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf-8');
-  renameSync(tmpPath, STORE_PATH);
+  try {
+    retryFs(() => renameSync(tmpPath, STORE_PATH));
+  } catch (error) {
+    if (!isTransientWindowsFsError(error)) throw error;
+    // Windows Defender, OneDrive, or an editor can briefly lock state.json and reject
+    // an atomic replace. Fall back to a direct write so the app can keep queueing jobs.
+    retryFs(() => writeFileSync(STORE_PATH, `${JSON.stringify(normalized, null, 2)}\n`, 'utf-8'));
+    try {
+      if (existsSync(tmpPath)) unlinkSync(tmpPath);
+    } catch {
+      // A stale temp file is harmless and easier to clean later than failing the run.
+    }
+  }
+}
+
+function retryFs(operation, attempts = 8) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return operation();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientWindowsFsError(error) || attempt === attempts - 1) break;
+      sleepSync(40 * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
+function isTransientWindowsFsError(error) {
+  return ['EPERM', 'EBUSY', 'EACCES'].includes(error?.code);
+}
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
 export function updateState(mutator) {
@@ -97,7 +133,7 @@ function normalizeState(state) {
   const jobs = Array.isArray(state.jobs) ? state.jobs : [];
   return {
     ...state,
-    schemaVersion: Number.isFinite(Number(state.schemaVersion)) ? Math.max(2, Number(state.schemaVersion)) : 2,
+    schemaVersion: Number.isFinite(Number(state.schemaVersion)) ? Math.max(3, Number(state.schemaVersion)) : 3,
     runs: Array.isArray(state.runs) ? state.runs : [],
     jobs: jobs.map((job) => normalizeJobRecord(job, now)),
     jobSources: Array.isArray(state.jobSources) ? state.jobSources : [],
@@ -106,6 +142,8 @@ function normalizeState(state) {
     documents: Array.isArray(state.documents) ? state.documents.map((doc) => normalizeDocumentRecord(doc, now)) : [],
     events: Array.isArray(state.events) ? state.events : [],
     resumeSnapshots: Array.isArray(state.resumeSnapshots) ? state.resumeSnapshots.map((snapshot) => normalizeResumeSnapshot(snapshot, now)) : [],
+    resumeProfiles: Array.isArray(state.resumeProfiles) ? state.resumeProfiles.map((profile) => normalizeResumeProfile(profile, now)) : [],
+    defaultResumeProfileId: state.defaultResumeProfileId || 'resume-1',
     hiddenDocuments: Array.isArray(state.hiddenDocuments) ? state.hiddenDocuments : [],
     hiddenJobs: Array.isArray(state.hiddenJobs) ? state.hiddenJobs : [],
     hiddenRuns: Array.isArray(state.hiddenRuns) ? state.hiddenRuns : [],
@@ -188,12 +226,33 @@ function normalizeApplicationRecord(app, now) {
 function normalizeDocumentRecord(doc, now) {
   return {
     ...doc,
+    resumeProfileId: doc?.resumeProfileId || '',
+    resumeProfileLabel: doc?.resumeProfileLabel || '',
     qaStatus: doc?.qaStatus || '',
     qaScore: Number.isFinite(Number(doc?.qaScore)) ? Number(doc.qaScore) : null,
     hidden: Boolean(doc?.hidden),
     hiddenReason: doc?.hiddenReason || '',
     hiddenAt: doc?.hiddenAt || '',
     createdAt: doc?.createdAt || now,
+  };
+}
+
+function normalizeResumeProfile(profile, now) {
+  return {
+    id: profile?.id || makeId('profile'),
+    label: profile?.label || 'Resume Profile',
+    roleFamily: profile?.roleFamily || '',
+    ownerName: profile?.ownerName || '',
+    sourceDir: profile?.sourceDir || '',
+    cvPath: profile?.cvPath || 'cv.md',
+    articleDigestPath: profile?.articleDigestPath || 'article-digest.md',
+    profileYmlPath: profile?.profileYmlPath || 'profile.yml',
+    storyBankPath: profile?.storyBankPath || 'story-bank.md',
+    isDefault: Boolean(profile?.isDefault),
+    isEnabled: profile?.isEnabled !== false,
+    archived: Boolean(profile?.archived),
+    createdAt: profile?.createdAt || now,
+    updatedAt: profile?.updatedAt || profile?.createdAt || now,
   };
 }
 
@@ -274,3 +333,4 @@ function inferAtsJobId(rawUrl) {
     return '';
   }
 }
+
