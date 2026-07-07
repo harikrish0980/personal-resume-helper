@@ -1,4 +1,4 @@
-# Personal Resume Helper Web App
+# EaZy Job Apply Web App
 
 Local-first web interface for the existing Resume Workspace setup.
 
@@ -42,7 +42,7 @@ RESUME_WORKSPACE_PATH=..\Resume-Workspace
 PORT=3025
 ```
 
-Free key: https://aistudio.google.com/apikey
+Free Gemini API key: https://aistudio.google.com/apikey
 
 If a normal Node/npm install is available later, this also works from this folder:
 

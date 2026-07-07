@@ -3032,7 +3032,7 @@ function companyDigestSection(company, articleDigest, terms = [], result = {}) {
 
 function digestProjectsForTarget(articleDigest = '', result = {}, context = {}) {
   const target = `${result.title || ''} ${result.jdText || ''} ${(result.matchingSkills || []).join(' ')}`.toLowerCase();
-  const useEazyProject = /\b(ai|llm|agent|automation|prompt|gemini|resume qa|resume tailoring|human-in-the-loop|human in the loop|career operations)\b/.test(target);
+  const useEazyProject = /\b(ai|llm|agent|automation|prompt|gemini|resume qa|resume tailoring|human-in-the-loop|human in the loop|job search workflow)\b/.test(target);
   const useAiToolsProject = isAiToolsTargetText(target);
   if (!useEazyProject && !useAiToolsProject) {
     return [];
@@ -3040,9 +3040,9 @@ function digestProjectsForTarget(articleDigest = '', result = {}, context = {}) 
   const candidates = [
     {
       pattern: /## 5\)[\s\S]*?(?=\n## 6\)|$)/m,
-      title: 'Personal Resume Helper - AI Career Operations Assistant',
+      title: 'EaZy Job Apply - AI Job Search Assistant',
       tech: 'Node.js, JavaScript, Google Gemini API, LLM workflows, resume QA, native PDF generation',
-      github: 'https://github.com/harikrish0980/Eazy-Job-Apply',
+      github: 'https://github.com/harikrish0980/personal-resume-helper',
       shouldUse: useEazyProject,
     },
     {
@@ -3228,7 +3228,7 @@ function createFallbackReport(jdPath, reason, sourceUrl = '') {
 **Score:** ${summary.score}/5
 **Legitimacy:** Needs Review
 **PDF:** pending
-**Tool:** Personal Resume Helper Web App fallback
+**Tool:** EaZy Job Apply Web App fallback
 
 ---
 

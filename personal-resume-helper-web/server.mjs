@@ -107,7 +107,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Personal Resume Helper Web App running at http://${HOST}:${PORT}`);
+  console.log(`EaZy Job Apply Web App running at http://${HOST}:${PORT}`);
 });
 
 scrubStoredPrivateDiscoveryCriteria();
@@ -256,7 +256,7 @@ async function handleApi(req, res, url) {
     const redacted = url.searchParams.get('redacted') !== 'false';
     sendJson(res, 200, {
       exportedAt: new Date().toISOString(),
-      app: 'Personal Resume Helper',
+      app: 'EaZy Job Apply',
       schemaVersion: state.schemaVersion || 2,
       redacted,
       state: redacted ? redactStateForExport(state) : state,
@@ -1318,7 +1318,7 @@ function importStateBackup(body = {}) {
     throw new ApiError(400, 'Import file must contain a JSON state object.');
   }
   if (!Array.isArray(candidate.jobs) || !Array.isArray(candidate.runs)) {
-    throw new ApiError(400, 'Import file does not look like an Personal Resume Helper state backup.');
+    throw new ApiError(400, 'Import file does not look like an EaZy Job Apply state backup.');
   }
   const before = readState();
   const importedAt = new Date().toISOString();

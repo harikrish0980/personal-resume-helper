@@ -57,7 +57,7 @@ for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:"127\.0\.0\.1:%PORT% .*
 
 if defined EXISTING_PID (
   echo Port %PORT% is already in use by process %EXISTING_PID%.
-  set /p STOP_EXISTING="Stop it and start Personal Resume Helper from this folder? [Y/N] "
+  set /p STOP_EXISTING="Stop it and start EaZy Job Apply from this folder? [Y/N] "
   if /I "%STOP_EXISTING%"=="Y" (
     powershell -NoProfile -Command "Stop-Process -Id %EXISTING_PID% -Force"
     timeout /t 1 /nobreak >nul
@@ -69,7 +69,7 @@ if defined EXISTING_PID (
 )
 
 cd /d "%APP_ROOT%"
-echo Starting Personal Resume Helper at http://127.0.0.1:%PORT%
+echo Starting EaZy Job Apply at http://127.0.0.1:%PORT%
 start "" "http://127.0.0.1:%PORT%"
 "%NODE_EXE%" server.mjs
 

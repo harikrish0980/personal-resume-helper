@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Local ScrapeGraphAI sidecar for Personal Resume Helper discovery.
+"""Local ScrapeGraphAI sidecar for EaZy Job Apply discovery.
 
 Reads JSON from stdin and writes one JSON object to stdout. The Node app owns
 URL safety, scoring, dedupe, and persistence; this sidecar only extracts
@@ -135,7 +135,7 @@ def normalize_result(raw_result: Any, seed_url: str, limit: int) -> list[dict[st
 
 def mock_response(payload: dict[str, Any]) -> dict[str, Any]:
     seed = (payload.get("seedUrls") or ["https://example.com/careers"])[0]
-    query = clean_text(payload.get("query") or "Senior Data Engineer")
+    query = clean_text(payload.get("query") or "Target role")
     return {
         "ok": True,
         "jobs": [{

@@ -1,6 +1,6 @@
-# Personal Resume Helper
+# EaZy Job Apply
 
-Personal Resume Helper is a local-first job search workspace. It helps a job seeker compare a job description against their own resume, generate tailored resume drafts, create supporting documents, and track applications without uploading private career data to a shared web service.
+EaZy Job Apply is a local-first job search workspace. It helps a job seeker compare a job description against their own resume, generate tailored resume drafts, create supporting documents, and track applications without uploading private career data to a shared web service.
 
 The app does not auto-apply. The final application is always reviewed and submitted manually by the user.
 
@@ -9,8 +9,21 @@ The app does not auto-apply. The final application is always reviewed and submit
 - Keeps resumes, work history, generated files, and application notes on the user's own computer.
 - Lets users keep multiple resume profiles, such as `Resume 1`, `Resume 2`, and `Resume 3`.
 - Gives each resume profile its own `article-digest.md` so proof points and project details can be tailored per profile.
-- Helps users understand fit, missing skills, matching skills, and resume quality before applying.
+- Tailors resumes with real experience points according to the job description, without manually rewriting the resume every time.
+- Helps users quickly understand whether they are a good fit for a role before applying.
+- Saves time and effort by producing resume drafts, fit analysis, and supporting files from one workflow.
 - Creates reusable local records for applications, reports, generated resumes, and follow-up notes.
+- Exports resume files in PDF, Word/DOCX, and HTML formats, with both 1-page ATS and 2-page detailed resume options.
+
+## Real Experience Only
+
+EaZy Job Apply should not invent new experience, fake metrics, or unrelated AI-generated achievements. It is built for people who have real working experience and want to target new jobs more efficiently.
+
+The best results come from:
+
+- a truthful resume in `Resume-Workspace/profiles/resume-1/cv.md`
+- real client, project, tool, metric, and business-impact points in `Resume-Workspace/profiles/resume-1/article-digest.md`
+- reviewing the generated resume before applying
 
 ## How It Works
 
@@ -55,7 +68,7 @@ The real `Resume-Workspace/` folder is private and ignored by Git. It is created
 
 ```powershell
 git clone <your-repo-url>
-cd "Easy job apply"
+cd personal-resume-helper
 Copy-Item -Recurse templates\Resume-Workspace Resume-Workspace
 Copy-Item personal-resume-helper-web\.env.example personal-resume-helper-web\.env
 ```
@@ -127,7 +140,9 @@ RESUME_WORKSPACE_PATH=../Resume-Workspace
 PORT=3025
 ```
 
-`CAREER_OPS_PATH` is still accepted as a backward-compatible fallback for older local installs. New users should use `RESUME_WORKSPACE_PATH`.
+Get a free Gemini API key from Google AI Studio: https://aistudio.google.com/apikey
+
+Use `RESUME_WORKSPACE_PATH` for this setup. `PORT=3025` is the default local app port for everyone; users can change it only if another local app already uses that port.
 
 Never commit `.env`, real resumes, generated documents, reports, logs, or private application data.
 

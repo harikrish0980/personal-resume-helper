@@ -34,7 +34,7 @@ export function appendTrackerEntry(result, applicationStatus = 'Resume Ready') {
   const reportCell = reportPath ? `[${String(nextNumber).padStart(3, '0')}](${reportPath.replaceAll('\\', '/')})` : 'No';
   const pdfCell = pdfPath ? 'Yes' : 'No';
   const score = result.score ? `${normalizeScore(result.score)}/5` : 'Pending';
-  const notes = escapeCell(result.summary || result.recommendation || 'Created from Personal Resume Helper Web App.');
+  const notes = escapeCell(result.summary || result.recommendation || 'Created from EaZy Job Apply Web App.');
   const line = `| ${nextNumber} | ${today} | ${escapeCell(result.company || 'Unknown')} | ${escapeCell(result.title || 'Unknown role')} | ${score} | ${applicationStatus} | ${pdfCell} | ${reportCell} | ${notes} |\n`;
 
   let text = existsSync(APPLICATIONS_PATH) ? readFileSync(APPLICATIONS_PATH, 'utf-8') : defaultTracker();

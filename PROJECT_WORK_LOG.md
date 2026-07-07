@@ -4,7 +4,7 @@ Last updated: 2026-06-30
 
 ## Project Idea
 
-Personal Resume Helper is a local-first web application for job search operations. It started as a web layer on top of the existing Resume Workspace CLI project, then grew into a practical command center for analyzing jobs, generating role-specific resumes, tracking documents, reviewing scanner results, and managing manual applications.
+EaZy Job Apply is a local-first web application for job search operations. It started as a web layer on top of the existing Resume Workspace CLI project, then grew into a practical command center for analyzing jobs, generating role-specific resumes, tracking documents, reviewing scanner results, and managing manual applications.
 
 The goal is to help an IT/data professional apply more efficiently without auto-submitting applications or losing control of private resume data.
 
@@ -36,13 +36,13 @@ The project uses Resume Workspace as the local engine/base:
 - scanner pipeline/history
 - generated output folders
 
-Personal Resume Helper adds the local web app, multi-profile resume flow, document management, scanner inbox, application tracker, native PDF/DOCX generation, and local QA around resume tailoring.
+EaZy Job Apply adds the local web app, multi-profile resume flow, document management, scanner inbox, application tracker, native PDF/DOCX generation, and local QA around resume tailoring.
 
 ## Current Architecture
 
 ```text
 User
-  -> Personal Resume Helper web UI
+  -> EaZy Job Apply web UI
   -> Node.js local backend
   -> Resume Workspace adapter
   -> selected resume profile cv.md
@@ -233,7 +233,7 @@ Latest validation checked:
 
 ## Rename Decision
 
-Renaming the product is a good idea. The product should be called Personal Resume Helper.
+Renaming the product is a good idea. The product should be called EaZy Job Apply.
 
 Renaming the `Resume Workspace` folder right now is risky because many working paths depend on it:
 
@@ -249,7 +249,7 @@ Renaming the `Resume Workspace` folder right now is risky because many working p
 Recommended rename approach:
 
 1. Keep `Resume Workspace` as the internal engine folder for now.
-2. Update user-facing docs/UI to say Personal Resume Helper.
+2. Update user-facing docs/UI to say EaZy Job Apply.
 3. Later rename code variables from Resume Workspace wording to neutral `engine` wording.
 4. Support both old and new folder names during migration.
 5. Rename folder only after full tests pass.

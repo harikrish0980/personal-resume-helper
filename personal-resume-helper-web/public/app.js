@@ -165,7 +165,7 @@ function routeTo(route, options = {}) {
   document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach((button) => button.classList.toggle('active', button.dataset.route === route));
   document.getElementById(route)?.classList.add('active');
-  document.getElementById('page-title').textContent = pages[route]?.[0] || 'Personal Resume Helper';
+  document.getElementById('page-title').textContent = pages[route]?.[0] || 'EaZy Job Apply';
   document.getElementById('page-subtitle').textContent = pages[route]?.[1] || '';
   if (route === 'profile') loadProfile();
   if (route === 'scanner') loadScannerInbox();

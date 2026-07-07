@@ -434,7 +434,7 @@ The user should still review and apply manually.
 
 project.
 
-# Personal Resume Helper Web App
+# EaZy Job Apply Web App
 
 A web application built on top of an existing **Resume Workspace** setup.
 

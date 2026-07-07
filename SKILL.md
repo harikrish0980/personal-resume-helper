@@ -1,15 +1,15 @@
 ---
 name: personal-resume-helper-builder
-description: Project workflow for building, debugging, and QA-ing Personal Resume Helper, the local web app built on a Resume Workspace based engine.
+description: Project workflow for building, debugging, and QA-ing EaZy Job Apply, the local web app built on a Resume Workspace based engine.
 ---
 
-# Personal Resume Helper Builder Skill
+# EaZy Job Apply Builder Skill
 
-Use this skill when helping build, debug, document, or plan Personal Resume Helper.
+Use this skill when helping build, debug, document, or plan EaZy Job Apply.
 
 ## What This Project Is
 
-Personal Resume Helper is a local-first web application for job search operations.
+EaZy Job Apply is a local-first web application for job search operations.
 
 Core flow:
 
@@ -25,11 +25,11 @@ Never auto-submit applications. The final apply step is always manual and human-
 
 ## Naming And Ownership
 
-- Product name: Personal Resume Helper.
+- Product name: EaZy Job Apply.
 - Current engine/base folder: `Resume-Workspace`.
 - Treat Resume Workspace as the local engine dependency until a planned migration is done.
 - Do not casually rename the `Resume-Workspace` folder because `RESUME_WORKSPACE_PATH`, output paths, scanner files, reports, profile sources, and document links depend on it.
-- User-facing docs/UI should prefer Personal Resume Helper.
+- User-facing docs/UI should prefer EaZy Job Apply.
 - Internal folder rename should be a separate tested migration.
 
 ## Stack

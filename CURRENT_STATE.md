@@ -4,7 +4,7 @@ Last updated: 2026-06-29
 
 ## Project
 
-Personal Resume Helper is a local-first web app on top of Resume Workspace.
+EaZy Job Apply is a local-first web app on top of Resume Workspace.
 
 Main app:
 - `personal-resume-helper-web`
@@ -150,6 +150,6 @@ Expected:
 ## GitHub
 
 Repo:
-- `https://github.com/harikrish0980/Eazy-Job-Apply`
+- `https://github.com/harikrish0980/personal-resume-helper`
 
 Commit after each stable change so future work can use `git diff` instead of rereading the whole project.
