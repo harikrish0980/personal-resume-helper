@@ -51,7 +51,7 @@ Never auto-submit applications. The final apply step is always manual and human-
 - Root: repository root
 - Web app: `career-ops-web`
 - Engine/private data: `Career-Ops`
-- Main app URL: `http://127.0.0.1:3013`
+- Main app URL: `http://127.0.0.1:3025`
 - Server: `career-ops-web\server.mjs`
 - Frontend: `career-ops-web\public\index.html`, `public\app.js`, `public\styles.css`
 - Adapter: `career-ops-web\lib\careerOpsAdapter.mjs`
@@ -71,7 +71,7 @@ Use:
 ```env
 GEMINI_API_KEY=your_key_here
 CAREER_OPS_PATH=..\Career-Ops
-PORT=3013
+PORT=3025
 ```
 
 Never hardcode API keys. Treat `.env`, resumes, PDFs, DOCX files, reports, logs, and application tracking data as private.
@@ -180,7 +180,7 @@ Start-Process -FilePath 'node' -ArgumentList 'server.mjs' -WorkingDirectory 'car
 Check port:
 
 ```powershell
-netstat -ano | findstr :3013
+netstat -ano | findstr :3025
 ```
 
 Stop app:
@@ -194,7 +194,7 @@ Stop-Process -Id <PID> -Force
 After major changes:
 
 1. Run `npm run check`.
-2. Restart server on `3013`.
+2. Restart server on `3025`.
 3. Open Dashboard.
 4. Open Add Job and confirm Resume Profile and resume mode controls.
 5. Run one pasted JD analysis.

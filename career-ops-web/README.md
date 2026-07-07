@@ -9,14 +9,14 @@ From this web app folder:
 ```powershell
 cd 'career-ops-web'
 $env:CAREER_OPS_PATH='..\Career-Ops'
-$env:PORT='3013'
+$env:PORT='3025'
 node server.mjs
 ```
 
 Then open:
 
 ```text
-http://localhost:3013
+http://localhost:3025
 ```
 
 Or double-click:
@@ -39,7 +39,7 @@ Add:
 GEMINI_API_KEY=your_google_ai_studio_key_here
 GEMINI_MODEL=gemini-2.5-flash-lite
 CAREER_OPS_PATH=..\Career-Ops
-PORT=3013
+PORT=3025
 ```
 
 Free key: https://aistudio.google.com/apikey

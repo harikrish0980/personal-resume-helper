@@ -19,7 +19,7 @@ The app does not auto-apply. The final application is always reviewed and submit
 3. The user adds their resume text to `Career-Ops/profiles/resume-1/cv.md`.
 4. The user adds work proof points, project details, metrics, and reusable achievements to `Career-Ops/profiles/resume-1/article-digest.md`.
 5. The user adds their own API key in `career-ops-web/.env`.
-6. The user starts the local web app and opens `http://127.0.0.1:3013`.
+6. The user starts the local web app and opens `http://127.0.0.1:3025`.
 7. The user pastes a job URL or job description, selects a resume profile, and reviews the generated outputs.
 
 ## Project Layout
@@ -78,7 +78,7 @@ npm start
 Open:
 
 ```text
-http://127.0.0.1:3013
+http://127.0.0.1:3025
 ```
 
 For full setup details, see [docs/SETUP_LOCAL.md](docs/SETUP_LOCAL.md).
@@ -124,7 +124,7 @@ Create `career-ops-web/.env` from `career-ops-web/.env.example`.
 GEMINI_API_KEY=your_google_ai_studio_key_here
 GEMINI_MODEL=gemini-2.5-flash-lite
 CAREER_OPS_PATH=../Career-Ops
-PORT=3013
+PORT=3025
 ```
 
 Never commit `.env`, real resumes, generated documents, reports, logs, or private application data.

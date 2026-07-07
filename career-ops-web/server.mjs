@@ -13,7 +13,7 @@ loadEnvFile(join(APP_ROOT, '.env'));
 const CAREER_OPS_ROOT = resolve(process.env.CAREER_OPS_PATH || join(APP_ROOT, '..', 'Career-Ops'));
 const CAREER_OPS_PROFILES_ROOT = join(CAREER_OPS_ROOT, 'profiles');
 const PUBLIC_DIR = join(APP_ROOT, 'public');
-const PORT = Number(process.env.PORT || 3013);
+const PORT = Number(process.env.PORT || 3025);
 const HOST = process.env.HOST || '127.0.0.1';
 const DEBUG_LOCAL_PATHS = process.env.DEBUG_LOCAL_PATHS === '1';
 const queue = [];

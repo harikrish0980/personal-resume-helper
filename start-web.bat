@@ -5,7 +5,7 @@ set "PROJECT_ROOT=%~dp0"
 set "APP_ROOT=%PROJECT_ROOT%career-ops-web"
 set "CAREER_OPS_PATH=%PROJECT_ROOT%Career-Ops"
 set "TEMPLATE_ROOT=%PROJECT_ROOT%templates\Career-Ops"
-if not defined PORT set "PORT=3013"
+if not defined PORT set "PORT=3025"
 if not defined GEMINI_MODEL set "GEMINI_MODEL=gemini-2.5-flash-lite"
 
 set "NODE_EXE=node"

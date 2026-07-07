@@ -74,7 +74,7 @@ Set:
 GEMINI_API_KEY=your_google_ai_studio_key_here
 GEMINI_MODEL=gemini-2.5-flash-lite
 CAREER_OPS_PATH=../Career-Ops
-PORT=3013
+PORT=3025
 ```
 
 ## 6. Start The App
@@ -87,7 +87,7 @@ npm start
 Open:
 
 ```text
-http://127.0.0.1:3013
+http://127.0.0.1:3025
 ```
 
 ## 7. Use The App
@@ -138,4 +138,4 @@ If the app cannot find profile files, confirm `CAREER_OPS_PATH=../Career-Ops` an
 
 If the app starts but AI evaluation fails, confirm the Gemini API key is valid and saved in `career-ops-web/.env`.
 
-If port `3013` is already in use, change `PORT` in `.env`.
+If port `3025` is already in use, change `PORT` in `.env`.

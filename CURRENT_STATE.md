@@ -8,7 +8,7 @@ EaZy Job Apply is a local-first web app on top of Career-Ops.
 
 Main app:
 - `career-ops-web`
-- URL: `http://127.0.0.1:3013`
+- URL: `http://127.0.0.1:3025`
 - Start: `start-web.bat` or `npm start` inside `career-ops-web`
 
 Career-Ops engine and private resume data:
