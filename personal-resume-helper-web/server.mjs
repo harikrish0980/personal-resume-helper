@@ -5,13 +5,13 @@ import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { appendTrackerEntry, parseApplicationsTracker } from './lib/tracker.mjs';
 import { makeId, readState, updateState, writeState } from './lib/store.mjs';
-import { runCareerOpsAnalysis } from './lib/careerOpsAdapter.mjs';
+import { runResumeWorkspaceAnalysis } from './lib/resumeWorkspaceAdapter.mjs';
 import { validateJobUrl } from './lib/urlSafety.mjs';
 
 const APP_ROOT = process.cwd();
 loadEnvFile(join(APP_ROOT, '.env'));
-const CAREER_OPS_ROOT = resolve(process.env.CAREER_OPS_PATH || join(APP_ROOT, '..', 'Career-Ops'));
-const CAREER_OPS_PROFILES_ROOT = join(CAREER_OPS_ROOT, 'profiles');
+const RESUME_WORKSPACE_ROOT = resolve(process.env.RESUME_WORKSPACE_PATH || process.env.CAREER_OPS_PATH || join(APP_ROOT, '..', 'Resume-Workspace'));
+const RESUME_WORKSPACE_PROFILES_ROOT = join(RESUME_WORKSPACE_ROOT, 'profiles');
 const PUBLIC_DIR = join(APP_ROOT, 'public');
 const PORT = Number(process.env.PORT || 3025);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -77,7 +77,7 @@ const RESUME_PROFILE_DEFINITIONS = [
   },
 ];
 
-loadEnvFile(join(CAREER_OPS_ROOT, '.env'));
+loadEnvFile(join(RESUME_WORKSPACE_ROOT, '.env'));
 process.env.GEMINI_MODEL ||= 'gemini-2.5-flash-lite';
 
 const server = http.createServer(async (req, res) => {
@@ -107,7 +107,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Career-Ops Web App running at http://${HOST}:${PORT}`);
+  console.log(`Personal Resume Helper Web App running at http://${HOST}:${PORT}`);
 });
 
 scrubStoredPrivateDiscoveryCriteria();
@@ -177,7 +177,7 @@ async function handleApi(req, res, url) {
   if (req.method === 'POST' && url.pathname === '/api/scanner/run-api') {
     const body = await readJson(req).catch(() => ({}));
     const dryRun = ['1', 'true', 'yes'].includes(String(url.searchParams.get('dryRun') || body.dryRun || '').toLowerCase());
-    sendJson(res, 200, await runCareerOpsApiScanner({ dryRun }));
+    sendJson(res, 200, await runResumeWorkspaceApiScanner({ dryRun }));
     return;
   }
   if (req.method === 'POST' && url.pathname === '/api/scanner/archive') {
@@ -256,7 +256,7 @@ async function handleApi(req, res, url) {
     const redacted = url.searchParams.get('redacted') !== 'false';
     sendJson(res, 200, {
       exportedAt: new Date().toISOString(),
-      app: 'EaZy Job Apply',
+      app: 'Personal Resume Helper',
       schemaVersion: state.schemaVersion || 2,
       redacted,
       state: redacted ? redactStateForExport(state) : state,
@@ -400,14 +400,14 @@ function buildResumeProfiles(state = readState(), options = {}) {
 
 function buildResumeProfile(profile, options = {}) {
   const sourceDir = profile.sourceDir || `profiles/${profile.id}`;
-  const dir = safeCareerOpsProfilePath(sourceDir);
-  const cvPath = safeCareerOpsProfilePath(join(sourceDir, profile.cvPath || 'cv.md'));
-  const profileYmlPath = safeCareerOpsProfilePath(join(sourceDir, profile.profileYmlPath || 'profile.yml'));
-  const storyBankPath = safeCareerOpsProfilePath(join(sourceDir, profile.storyBankPath || 'story-bank.md'));
-  const rootFallbackCvPath = join(CAREER_OPS_ROOT, 'cv.md');
-  const sharedArticleDigestPath = join(CAREER_OPS_ROOT, 'article-digest.md');
-  const rootFallbackProfileYmlPath = join(CAREER_OPS_ROOT, 'config', 'profile.yml');
-  const rootFallbackStoryBankPath = join(CAREER_OPS_ROOT, 'interview-prep', 'story-bank.md');
+  const dir = safeResumeWorkspaceProfilePath(sourceDir);
+  const cvPath = safeResumeWorkspaceProfilePath(join(sourceDir, profile.cvPath || 'cv.md'));
+  const profileYmlPath = safeResumeWorkspaceProfilePath(join(sourceDir, profile.profileYmlPath || 'profile.yml'));
+  const storyBankPath = safeResumeWorkspaceProfilePath(join(sourceDir, profile.storyBankPath || 'story-bank.md'));
+  const rootFallbackCvPath = join(RESUME_WORKSPACE_ROOT, 'cv.md');
+  const sharedArticleDigestPath = join(RESUME_WORKSPACE_ROOT, 'article-digest.md');
+  const rootFallbackProfileYmlPath = join(RESUME_WORKSPACE_ROOT, 'config', 'profile.yml');
+  const rootFallbackStoryBankPath = join(RESUME_WORKSPACE_ROOT, 'interview-prep', 'story-bank.md');
   const useRootFallback = profile.id === defaultResumeProfileIdFromDefinitions() && !existsSync(cvPath) && existsSync(rootFallbackCvPath);
   const effectiveCvPath = useRootFallback ? rootFallbackCvPath : cvPath;
   const profileDigestPath = profileArticleDigestPath(profile, sourceDir);
@@ -429,10 +429,10 @@ function buildResumeProfile(profile, options = {}) {
     roleFamily: profile.roleFamily || '',
     ownerName: profile.ownerName || '',
     sourceDir,
-    cvPath: relative(CAREER_OPS_ROOT, effectiveCvPath).replace(/\\/g, '/'),
-    articleDigestPath: relative(CAREER_OPS_ROOT, effectiveDigestPath).replace(/\\/g, '/'),
-    profileYmlPath: relative(CAREER_OPS_ROOT, effectiveProfileYmlPath).replace(/\\/g, '/'),
-    storyBankPath: relative(CAREER_OPS_ROOT, effectiveStoryBankPath).replace(/\\/g, '/'),
+    cvPath: relative(RESUME_WORKSPACE_ROOT, effectiveCvPath).replace(/\\/g, '/'),
+    articleDigestPath: relative(RESUME_WORKSPACE_ROOT, effectiveDigestPath).replace(/\\/g, '/'),
+    profileYmlPath: relative(RESUME_WORKSPACE_ROOT, effectiveProfileYmlPath).replace(/\\/g, '/'),
+    storyBankPath: relative(RESUME_WORKSPACE_ROOT, effectiveStoryBankPath).replace(/\\/g, '/'),
     isDefault: Boolean(profile.isDefault),
     isEnabled: explicitlyEnabled && cvExists,
     archived: Boolean(profile.archived),
@@ -459,7 +459,7 @@ function profileArticleDigestPath(profile, sourceDir) {
   const explicitlyProfileScoped = profile.useProfileArticleDigest === true
     || (digestPath && digestPath !== 'article-digest.md');
   if (!explicitlyProfileScoped) return '';
-  return safeCareerOpsProfilePath(join(sourceDir, digestPath || 'article-digest.md'));
+  return safeResumeWorkspaceProfilePath(join(sourceDir, digestPath || 'article-digest.md'));
 }
 
 function resolveResumeProfile(profileId = '', options = {}) {
@@ -484,11 +484,11 @@ function defaultResumeProfileIdFromDefinitions() {
   return RESUME_PROFILE_DEFINITIONS.find((profile) => profile.isDefault)?.id || RESUME_PROFILE_DEFINITIONS[0]?.id || '';
 }
 
-function safeCareerOpsProfilePath(relativePath = '') {
-  const target = resolve(CAREER_OPS_ROOT, relativePath);
-  const rel = relative(CAREER_OPS_PROFILES_ROOT, target);
+function safeResumeWorkspaceProfilePath(relativePath = '') {
+  const target = resolve(RESUME_WORKSPACE_ROOT, relativePath);
+  const rel = relative(RESUME_WORKSPACE_PROFILES_ROOT, target);
   if (rel.startsWith('..') || rel === '' || /^[A-Za-z]:/.test(rel) || rel.startsWith('\\')) {
-    throw new ApiError(400, 'Resume profile paths must stay inside Career-Ops/profiles.');
+    throw new ApiError(400, 'Resume profile paths must stay inside Resume-Workspace/profiles.');
   }
   return target;
 }
@@ -751,7 +751,7 @@ function deleteResumeSnapshot(snapshotId) {
 function prepareDiscoveryOptions(options = {}, state = readState()) {
   const providedText = String(options.resumeText || '').trim();
   const latestSnapshot = latestResumeSnapshot(state);
-  const cvText = readCareerOpsText('cv.md');
+  const cvText = readResumeWorkspaceText('cv.md');
   const resumeText = providedText || latestSnapshot?.text || cvText;
   const persistResumeSnapshot = options.persistResumeSnapshot !== false && options.persistResumeSnapshot !== 'false';
   const resumeSource = providedText
@@ -780,7 +780,7 @@ function upsertResumeSnapshot(state, snapshot) {
     id: snapshot.id || makeId('resume'),
     source: snapshot.source || 'pasted',
     fileName: snapshot.fileName || '',
-    label: snapshot.fileName || (snapshot.source === 'cv_md' ? 'Career-Ops cv.md' : 'Discovery resume text'),
+    label: snapshot.fileName || (snapshot.source === 'cv_md' ? 'Resume Workspace cv.md' : 'Discovery resume text'),
     text: String(snapshot.text || '').slice(0, 120000),
     textLength: String(snapshot.text || '').length,
     inferredRole: snapshot.inferredRole || inferTargetRoleFromText(snapshot.text),
@@ -882,8 +882,8 @@ function redactLongPrivateText(value) {
   return text.length > 200 ? `${text.slice(0, 200)}... [redacted for export]` : text;
 }
 
-function readCareerOpsText(relativePath) {
-  const target = join(CAREER_OPS_ROOT, relativePath);
+function readResumeWorkspaceText(relativePath) {
+  const target = join(RESUME_WORKSPACE_ROOT, relativePath);
   return existsSync(target) ? readFileSync(target, 'utf-8') : '';
 }
 
@@ -942,7 +942,7 @@ async function processQueue() {
     if (!run) return;
     const resumeProfile = resolveResumeProfile(run.resumeProfileId, { requireCv: run.generateResume !== false });
 
-    const result = await runCareerOpsAnalysis({
+    const result = await runResumeWorkspaceAnalysis({
       runId: run.id,
       jobUrl: run.jobUrl,
       jobDescription: run.jobDescription,
@@ -997,7 +997,7 @@ function completeRun(runId, result) {
     run.completedAt = now;
     run.updatedAt = now;
     run.result = normalizedResult;
-    run.logs.push({ at: now, message: 'Career-Ops analysis completed.' });
+    run.logs.push({ at: now, message: 'Resume Workspace analysis completed.' });
 
     if (job) {
       applyNormalizedJobMetadata(job, normalizedResult, run);
@@ -1008,7 +1008,7 @@ function completeRun(runId, result) {
       job.updatedAt = now;
     }
 
-    addDocument(state, run, 'career_ops_report', normalizedResult.reportPath);
+    addDocument(state, run, 'resume_workspace_report', normalizedResult.reportPath);
     addDocument(state, run, 'resume_pdf', normalizedResult.resumePdfPath);
     addDocument(state, run, 'resume_docx', normalizedResult.resumeDocxPath);
     addDocument(state, run, 'resume_html', normalizedResult.resumeHtmlPath);
@@ -1272,7 +1272,7 @@ function deleteJob(jobId) {
 function hideDocument(filePath) {
   const normalized = normalizeRelPath(filePath);
   if (!normalized) throw new Error('Document path is required.');
-  if (!isAllowedArtifactPath(normalized)) throw new Error('Only Career-Ops report/output documents can be hidden.');
+  if (!isAllowedArtifactPath(normalized)) throw new Error('Only Resume Workspace report/output documents can be hidden.');
   updateState((state) => {
     state.hiddenDocuments ||= [];
     if (!state.hiddenDocuments.includes(normalized)) state.hiddenDocuments.push(normalized);
@@ -1289,7 +1289,7 @@ function hideDocument(filePath) {
 function updateDocumentLabel(filePath, label) {
   const normalized = normalizeRelPath(filePath);
   if (!normalized) throw new Error('Document path is required.');
-  if (!isAllowedArtifactPath(normalized)) throw new Error('Only Career-Ops report/output documents can be edited.');
+  if (!isAllowedArtifactPath(normalized)) throw new Error('Only Resume Workspace report/output documents can be edited.');
   const cleanLabel = cleanDisplayText(label).slice(0, 160);
   if (!cleanLabel) throw new ApiError(400, 'Document label cannot be empty.');
   return updateState((state) => {
@@ -1318,7 +1318,7 @@ function importStateBackup(body = {}) {
     throw new ApiError(400, 'Import file must contain a JSON state object.');
   }
   if (!Array.isArray(candidate.jobs) || !Array.isArray(candidate.runs)) {
-    throw new ApiError(400, 'Import file does not look like an EaZy Job Apply state backup.');
+    throw new ApiError(400, 'Import file does not look like an Personal Resume Helper state backup.');
   }
   const before = readState();
   const importedAt = new Date().toISOString();
@@ -1377,8 +1377,8 @@ function addDocument(state, run, type, filePath) {
 
 function getScannerInbox() {
   const state = readState();
-  const pipelinePath = join(CAREER_OPS_ROOT, 'data', 'pipeline.md');
-  const historyPath = join(CAREER_OPS_ROOT, 'data', 'scan-history.tsv');
+  const pipelinePath = join(RESUME_WORKSPACE_ROOT, 'data', 'pipeline.md');
+  const historyPath = join(RESUME_WORKSPACE_ROOT, 'data', 'scan-history.tsv');
   const history = readScannerHistory(historyPath);
   const hiddenRows = new Set((state.hiddenScannerRows || []).map((item) => String(item?.id || item?.url || item || '')));
   const rows = existsSync(pipelinePath)
@@ -1408,7 +1408,7 @@ function getScannerInbox() {
     return {
       ...row,
       id: key,
-      source: historyItem?.portal || row.source || 'Career-Ops pipeline',
+      source: historyItem?.portal || row.source || 'Resume Workspace pipeline',
       location: historyItem?.location || row.location || '',
       sourceStatus,
       firstSeen,
@@ -1474,7 +1474,7 @@ function parsePipelineLine(line = '') {
   const urlIndex = parts.findIndex((part) => /^https?:\/\//i.test(part));
   const urlMatch = body.match(/https?:\/\/[^\s|]+/i);
   const url = urlMatch?.[0] || (urlIndex >= 0 ? parts[urlIndex].split(/\s+(?:-|–|—|â€”|â€“)\s+/)[0] : '');
-  const warning = marker === '!' || /search page|not a single jd|use [`/]?career-ops scan/i.test(body);
+  const warning = marker === '!' || /search page|not a single jd|use [`/]?resume-workspace scan/i.test(body);
   if (urlIndex >= 0) {
     const company = parts[urlIndex + 1] || '';
     const title = parts[urlIndex + 2] || '';
@@ -1497,9 +1497,9 @@ function parsePipelineLine(line = '') {
   };
 }
 
-async function runCareerOpsApiScanner({ dryRun = false } = {}) {
-  const portalsPath = join(CAREER_OPS_ROOT, 'portals.yml');
-  if (!existsSync(portalsPath)) throw new ApiError(404, 'Career-Ops portals.yml was not found.');
+async function runResumeWorkspaceApiScanner({ dryRun = false } = {}) {
+  const portalsPath = join(RESUME_WORKSPACE_ROOT, 'portals.yml');
+  if (!existsSync(portalsPath)) throw new ApiError(404, 'Resume Workspace portals.yml was not found.');
   const config = parseApiScannerPortalConfig(readFileSync(portalsPath, 'utf-8'));
   const titleFilter = buildApiScannerTitleFilter(config.titleFilter);
   const locationFilter = buildApiScannerLocationFilter(config.locationFilter);
@@ -1722,9 +1722,9 @@ function parseScannerApiJobs(type, json, companyName) {
 function loadScannerSeenSets() {
   const urls = new Set();
   const companyRoles = new Set();
-  const historyPath = join(CAREER_OPS_ROOT, 'data', 'scan-history.tsv');
-  const pipelinePath = join(CAREER_OPS_ROOT, 'data', 'pipeline.md');
-  const applicationsPath = join(CAREER_OPS_ROOT, 'data', 'applications.md');
+  const historyPath = join(RESUME_WORKSPACE_ROOT, 'data', 'scan-history.tsv');
+  const pipelinePath = join(RESUME_WORKSPACE_ROOT, 'data', 'pipeline.md');
+  const applicationsPath = join(RESUME_WORKSPACE_ROOT, 'data', 'applications.md');
   for (const filePath of [historyPath, pipelinePath, applicationsPath]) {
     if (!existsSync(filePath)) continue;
     const text = readFileSync(filePath, 'utf-8');
@@ -1742,7 +1742,7 @@ function loadScannerSeenSets() {
 }
 
 function appendScannerOffersToPipeline(offers = []) {
-  const pipelinePath = join(CAREER_OPS_ROOT, 'data', 'pipeline.md');
+  const pipelinePath = join(RESUME_WORKSPACE_ROOT, 'data', 'pipeline.md');
   let text = existsSync(pipelinePath) ? readFileSync(pipelinePath, 'utf-8') : '# Pipeline Inbox\n\n## Pendientes\n\n## Procesadas\n';
   const block = offers.map((offer) => `- [ ] ${offer.url} | ${offer.company} | ${offer.title}`).join('\n') + '\n';
   const marker = '## Pendientes';
@@ -1758,7 +1758,7 @@ function appendScannerOffersToPipeline(offers = []) {
 }
 
 function upsertScannerOffersInHistory(offers = [], date = new Date().toISOString().slice(0, 10)) {
-  const historyPath = join(CAREER_OPS_ROOT, 'data', 'scan-history.tsv');
+  const historyPath = join(RESUME_WORKSPACE_ROOT, 'data', 'scan-history.tsv');
   const byUrl = new Map();
   if (existsSync(historyPath)) {
     for (const line of readFileSync(historyPath, 'utf-8').split(/\r?\n/).slice(1)) {
@@ -1875,9 +1875,9 @@ function cleanScannerText(value = '') {
 }
 
 function getScannerHealthSummary() {
-  const portalsPath = join(CAREER_OPS_ROOT, 'portals.yml');
-  const pipelinePath = join(CAREER_OPS_ROOT, 'data', 'pipeline.md');
-  const historyPath = join(CAREER_OPS_ROOT, 'data', 'scan-history.tsv');
+  const portalsPath = join(RESUME_WORKSPACE_ROOT, 'portals.yml');
+  const pipelinePath = join(RESUME_WORKSPACE_ROOT, 'data', 'pipeline.md');
+  const historyPath = join(RESUME_WORKSPACE_ROOT, 'data', 'scan-history.tsv');
   const stats = existsSync(portalsPath) ? scannerPortalStats(readFileSync(portalsPath, 'utf-8')) : {
     trackedCompanies: 0,
     enabledCompanies: 0,
@@ -1914,9 +1914,9 @@ async function getHealth() {
   const required = ['profiles/resume-1/cv.md', 'profiles/resume-1/article-digest.md'];
   const state = readState();
   return {
-    ok: required.every((file) => existsSync(join(CAREER_OPS_ROOT, file))),
+    ok: required.every((file) => existsSync(join(RESUME_WORKSPACE_ROOT, file))),
     appRoot: DEBUG_LOCAL_PATHS ? APP_ROOT : 'local app root',
-    careerOpsRoot: DEBUG_LOCAL_PATHS ? CAREER_OPS_ROOT : 'local Career-Ops root',
+    resumeWorkspaceRoot: DEBUG_LOCAL_PATHS ? RESUME_WORKSPACE_ROOT : 'local Resume Workspace root',
     node: process.version,
     schemaVersion: state.schemaVersion || 2,
     resumeSnapshots: (state.resumeSnapshots || []).length,
@@ -1930,7 +1930,7 @@ async function getHealth() {
     },
     discoveryDisabled: true,
     scanner: getScannerHealthSummary(),
-    required: required.map((file) => ({ file, exists: existsSync(join(CAREER_OPS_ROOT, file)) })),
+    required: required.map((file) => ({ file, exists: existsSync(join(RESUME_WORKSPACE_ROOT, file)) })),
   };
 }
 
@@ -1952,9 +1952,9 @@ function getProfile(selectedResumeProfileId = '') {
   const state = readState();
   const profilePayload = getResumeProfilesPayload(selectedResumeProfileId);
   const activeProfile = resolveResumeProfile(profilePayload.activeResumeProfile?.id || selectedResumeProfileId);
-  const profilePath = join(CAREER_OPS_ROOT, activeProfile.profileYmlPath || 'config/profile.yml');
-  const cvPath = join(CAREER_OPS_ROOT, activeProfile.cvPath || 'cv.md');
-  const digestPath = join(CAREER_OPS_ROOT, activeProfile.articleDigestPath || 'article-digest.md');
+  const profilePath = join(RESUME_WORKSPACE_ROOT, activeProfile.profileYmlPath || 'config/profile.yml');
+  const cvPath = join(RESUME_WORKSPACE_ROOT, activeProfile.cvPath || 'cv.md');
+  const digestPath = join(RESUME_WORKSPACE_ROOT, activeProfile.articleDigestPath || 'article-digest.md');
   const cvText = activeProfile.cvText || (existsSync(cvPath) ? readFileSync(cvPath, 'utf-8') : '');
   const digestText = activeProfile.articleDigestText || (existsSync(digestPath) ? readFileSync(digestPath, 'utf-8') : '');
   const latest = latestResumeSnapshot(state);
@@ -1974,7 +1974,7 @@ function getProfile(selectedResumeProfileId = '') {
       cvLoaded: Boolean(cvText),
       articleDigestLoaded: Boolean(digestText),
       profileLoaded: existsSync(profilePath),
-      storyBankLoaded: existsSync(join(CAREER_OPS_ROOT, activeProfile.storyBankPath || 'interview-prep/story-bank.md')),
+      storyBankLoaded: existsSync(join(RESUME_WORKSPACE_ROOT, activeProfile.storyBankPath || 'interview-prep/story-bank.md')),
       usingRootFallback: Boolean(activeProfile.sourceHealth?.usingRootFallback),
       usingSharedArticleDigest: Boolean(activeProfile.sourceHealth?.usingSharedArticleDigest),
     },
@@ -1984,7 +1984,7 @@ function getProfile(selectedResumeProfileId = '') {
     discoveryResumeSource: latest ? publicResumeSnapshot(latest) : {
       id: 'cv_md_current',
       source: 'cv_md',
-      label: 'Career-Ops cv.md',
+      label: 'Resume Workspace cv.md',
       textLength: cvText.length,
       inferredRole: inferTargetRoleFromText(cvText),
     },
@@ -2355,7 +2355,7 @@ function documentDisplayName(type, job = {}, run = {}, filePath = '') {
   const kind = {
     resume_pdf: mode === 'one_page' ? '1-page tailored resume' : mode === 'two_page' ? '2-page tailored resume' : 'Tailored resume',
     resume_docx: mode === 'one_page' ? '1-page tailored resume Word' : mode === 'two_page' ? '2-page tailored resume Word' : 'Tailored resume Word',
-    career_ops_report: 'Career-Ops report',
+    resume_workspace_report: 'Resume Workspace report',
     cover_letter: 'Cover letter',
     original_resume: 'Original resume',
   }[type] || 'Document';
@@ -2368,7 +2368,7 @@ function inferDocumentTypeFromPath(filePath = '') {
   const normalized = normalizeRelPath(filePath);
   if (normalized === 'cv.md') return 'original_resume';
   if (normalized.endsWith('cover-letter.md')) return 'cover_letter';
-  if (normalized.startsWith('reports/')) return 'career_ops_report';
+  if (normalized.startsWith('reports/')) return 'resume_workspace_report';
   if (normalized.endsWith('.docx')) return 'resume_docx';
   if (normalized.endsWith('.html')) return 'resume_html';
   if (normalized.endsWith('.log')) return 'resume_pdf_error';
@@ -2378,12 +2378,12 @@ function inferDocumentTypeFromPath(filePath = '') {
 
 function listExistingDocuments() {
   const docs = [];
-  const cvPath = join(CAREER_OPS_ROOT, 'cv.md');
+  const cvPath = join(RESUME_WORKSPACE_ROOT, 'cv.md');
   if (existsSync(cvPath)) docs.push(toDoc('original_resume', cvPath));
-  collectFiles(join(CAREER_OPS_ROOT, 'reports'), '.md', 30).forEach((file) => docs.push(toDoc('career_ops_report', file)));
-  collectFiles(join(CAREER_OPS_ROOT, 'output'), '.pdf', 40).forEach((file) => docs.push(toDoc('resume_pdf', file)));
-  collectFiles(join(CAREER_OPS_ROOT, 'output'), '.docx', 40).forEach((file) => docs.push(toDoc('resume_docx', file)));
-  collectFiles(join(CAREER_OPS_ROOT, 'output'), 'cover-letter.md', 20).forEach((file) => docs.push(toDoc('cover_letter', file)));
+  collectFiles(join(RESUME_WORKSPACE_ROOT, 'reports'), '.md', 30).forEach((file) => docs.push(toDoc('resume_workspace_report', file)));
+  collectFiles(join(RESUME_WORKSPACE_ROOT, 'output'), '.pdf', 40).forEach((file) => docs.push(toDoc('resume_pdf', file)));
+  collectFiles(join(RESUME_WORKSPACE_ROOT, 'output'), '.docx', 40).forEach((file) => docs.push(toDoc('resume_docx', file)));
+  collectFiles(join(RESUME_WORKSPACE_ROOT, 'output'), 'cover-letter.md', 20).forEach((file) => docs.push(toDoc('cover_letter', file)));
   return docs.slice(0, 100);
 }
 
@@ -2494,8 +2494,8 @@ function serveFile(res, relativePath) {
   }
   const target = normalized.startsWith('app-data/')
     ? resolve(APP_ROOT, normalized.replace(/^app-data\//, ''))
-    : resolve(CAREER_OPS_ROOT, normalized);
-  const allowedRoot = normalized.startsWith('app-data/') ? APP_ROOT : CAREER_OPS_ROOT;
+    : resolve(RESUME_WORKSPACE_ROOT, normalized);
+  const allowedRoot = normalized.startsWith('app-data/') ? APP_ROOT : RESUME_WORKSPACE_ROOT;
   if (!target.startsWith(allowedRoot) || !existsSync(target)) {
     res.writeHead(404);
     res.end('File not found');
@@ -2541,7 +2541,7 @@ function contentType(file) {
 }
 
 function toDoc(type, absolutePath) {
-  const rel = normalizeRelPath(relative(CAREER_OPS_ROOT, absolutePath));
+  const rel = normalizeRelPath(relative(RESUME_WORKSPACE_ROOT, absolutePath));
   return {
     id: `${type}_${rel}`,
     type,
@@ -2560,14 +2560,14 @@ function isAllowedArtifactPath(filePath) {
   return normalized.startsWith('reports/')
     || normalized.startsWith('output/')
     || normalized.startsWith('webapp/storage/logs/')
-    || normalized.startsWith('app-data/data/career-ops-runtime/reports/')
-    || normalized.startsWith('app-data/data/career-ops-runtime/logs/')
-    || normalized.startsWith('app-data/data/career-ops-runtime/output/')
+    || normalized.startsWith('app-data/data/resume-workspace-runtime/reports/')
+    || normalized.startsWith('app-data/data/resume-workspace-runtime/logs/')
+    || normalized.startsWith('app-data/data/resume-workspace-runtime/output/')
     || normalized === 'cv.md';
 }
 
 function publicErrorMessage(error) {
-  const raw = String(error?.message || error || 'Career-Ops run failed.');
+  const raw = String(error?.message || error || 'Resume Workspace run failed.');
   if (error?.statusCode && error.statusCode < 500) return raw;
   const lower = raw.toLowerCase();
   if (lower.includes('429') || lower.includes('quota') || lower.includes('rate limit') || lower.includes('too many requests')) {
@@ -2703,13 +2703,13 @@ function cleanSummaryForStorage(summary, context = {}) {
   const title = chooseDisplayTitle(context.title, 'this role');
   const score = Number(context.score);
   const scoreText = Number.isFinite(score) && score > 0 ? ` Score: ${score}/5.` : '';
-  return `Career-Ops completed the evaluation for ${title} at ${company}.${scoreText} Recommendation: ${normalizeRecommendation(context.recommendation)}. Review the report, resume PDF, QA checks, and apply link before applying.`;
+  return `Resume Workspace completed the evaluation for ${title} at ${company}.${scoreText} Recommendation: ${normalizeRecommendation(context.recommendation)}. Review the report, resume PDF, QA checks, and apply link before applying.`;
 }
 
 function looksLikeRawReportSummary(value) {
   const text = cleanDisplayText(value).toLowerCase();
   return text.includes('archetype detected')
-    || text.includes('career-ops evaluation')
+    || text.includes('resume-workspace evaluation')
     || text.includes('tool: gemini')
     || text.includes('legitimacy:')
     || text.includes('pdf: pending')

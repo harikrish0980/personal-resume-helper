@@ -1,6 +1,6 @@
-# EaZy Job Apply
+# Personal Resume Helper
 
-EaZy Job Apply is a local-first job search workspace. It helps a job seeker compare a job description against their own resume, generate tailored resume drafts, create supporting documents, and track applications without uploading private career data to a shared web service.
+Personal Resume Helper is a local-first job search workspace. It helps a job seeker compare a job description against their own resume, generate tailored resume drafts, create supporting documents, and track applications without uploading private career data to a shared web service.
 
 The app does not auto-apply. The final application is always reviewed and submitted manually by the user.
 
@@ -15,10 +15,10 @@ The app does not auto-apply. The final application is always reviewed and submit
 ## How It Works
 
 1. The user clones this repository.
-2. The user copies `templates/Career-Ops/` to a private local `Career-Ops/` folder.
-3. The user adds their resume text to `Career-Ops/profiles/resume-1/cv.md`.
-4. The user adds work proof points, project details, metrics, and reusable achievements to `Career-Ops/profiles/resume-1/article-digest.md`.
-5. The user adds their own API key in `career-ops-web/.env`.
+2. The user copies `templates/Resume-Workspace/` to a private local `Resume-Workspace/` folder.
+3. The user adds their resume text to `Resume-Workspace/profiles/resume-1/cv.md`.
+4. The user adds work proof points, project details, metrics, and reusable achievements to `Resume-Workspace/profiles/resume-1/article-digest.md`.
+5. The user adds their own API key in `personal-resume-helper-web/.env`.
 6. The user starts the local web app and opens `http://127.0.0.1:3025`.
 7. The user pastes a job URL or job description, selects a resume profile, and reviews the generated outputs.
 
@@ -31,7 +31,7 @@ The app does not auto-apply. The final application is always reviewed and submit
 |   |-- SETUP_LOCAL.md
 |   `-- PRIVACY.md
 |-- templates
-|   `-- Career-Ops
+|   `-- Resume-Workspace
 |       |-- profiles
 |       |   |-- resume-1
 |       |   |   |-- cv.md
@@ -41,7 +41,7 @@ The app does not auto-apply. The final application is always reviewed and submit
 |       |-- jds
 |       |-- output
 |       `-- reports
-|-- career-ops-web
+|-- personal-resume-helper-web
 |   |-- server.mjs
 |   |-- .env.example
 |   |-- public
@@ -49,29 +49,29 @@ The app does not auto-apply. The final application is always reviewed and submit
 `-- start-web.bat
 ```
 
-The real `Career-Ops/` folder is private and ignored by Git. It is created locally from `templates/Career-Ops/`.
+The real `Resume-Workspace/` folder is private and ignored by Git. It is created locally from `templates/Resume-Workspace/`.
 
 ## Quick Start
 
 ```powershell
 git clone <your-repo-url>
 cd "Easy job apply"
-Copy-Item -Recurse templates\Career-Ops Career-Ops
-Copy-Item career-ops-web\.env.example career-ops-web\.env
+Copy-Item -Recurse templates\Resume-Workspace Resume-Workspace
+Copy-Item personal-resume-helper-web\.env.example personal-resume-helper-web\.env
 ```
 
 Edit:
 
 ```text
-Career-Ops/profiles/resume-1/cv.md
-Career-Ops/profiles/resume-1/article-digest.md
-career-ops-web/.env
+Resume-Workspace/profiles/resume-1/cv.md
+Resume-Workspace/profiles/resume-1/article-digest.md
+personal-resume-helper-web/.env
 ```
 
 Start the app:
 
 ```powershell
-cd career-ops-web
+cd personal-resume-helper-web
 npm start
 ```
 
@@ -97,10 +97,10 @@ The app uses generic public labels:
 Each profile has its own resume and article digest:
 
 ```text
-Career-Ops/profiles/resume-1/cv.md
-Career-Ops/profiles/resume-1/article-digest.md
-Career-Ops/profiles/resume-2/cv.md
-Career-Ops/profiles/resume-2/article-digest.md
+Resume-Workspace/profiles/resume-1/cv.md
+Resume-Workspace/profiles/resume-1/article-digest.md
+Resume-Workspace/profiles/resume-2/cv.md
+Resume-Workspace/profiles/resume-2/article-digest.md
 ```
 
 Use separate profiles for different job targets, industries, or seniority levels.
@@ -118,14 +118,16 @@ Use separate profiles for different job targets, industries, or seniority levels
 
 ## Configuration
 
-Create `career-ops-web/.env` from `career-ops-web/.env.example`.
+Create `personal-resume-helper-web/.env` from `personal-resume-helper-web/.env.example`.
 
 ```env
 GEMINI_API_KEY=your_google_ai_studio_key_here
 GEMINI_MODEL=gemini-2.5-flash-lite
-CAREER_OPS_PATH=../Career-Ops
+RESUME_WORKSPACE_PATH=../Resume-Workspace
 PORT=3025
 ```
+
+`CAREER_OPS_PATH` is still accepted as a backward-compatible fallback for older local installs. New users should use `RESUME_WORKSPACE_PATH`.
 
 Never commit `.env`, real resumes, generated documents, reports, logs, or private application data.
 
@@ -134,7 +136,7 @@ Never commit `.env`, real resumes, generated documents, reports, logs, or privat
 Run:
 
 ```powershell
-cd career-ops-web
+cd personal-resume-helper-web
 npm run check
 ```
 

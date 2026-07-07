@@ -1,13 +1,13 @@
 # Local Setup
 
-EaZy Job Apply is designed to run on the user's own computer. This keeps resumes, API keys, generated files, and job tracking data private.
+Personal Resume Helper is designed to run on the user's own computer. This keeps resumes, API keys, generated files, and job tracking data private.
 
 ## Requirements
 
 - Node.js 20 or newer
 - A Gemini API key for AI evaluation
 - Git
-- A private local `Career-Ops/` folder copied from `templates/Career-Ops/`
+- A private local `Resume-Workspace/` folder copied from `templates/Resume-Workspace/`
 
 ## 1. Clone The Repository
 
@@ -21,17 +21,17 @@ cd "Easy job apply"
 Copy the safe template folder:
 
 ```powershell
-Copy-Item -Recurse templates\Career-Ops Career-Ops
+Copy-Item -Recurse templates\Resume-Workspace Resume-Workspace
 ```
 
-The new `Career-Ops/` folder is ignored by Git. This is where the user's private resume data, job descriptions, reports, and generated documents live.
+The new `Resume-Workspace/` folder is ignored by Git. This is where the user's private resume data, job descriptions, reports, and generated documents live.
 
 ## 3. Add Resume Details
 
 Edit:
 
 ```text
-Career-Ops/profiles/resume-1/cv.md
+Resume-Workspace/profiles/resume-1/cv.md
 ```
 
 Paste the resume content for the first profile. Keep it clean, factual, and current.
@@ -41,7 +41,7 @@ Paste the resume content for the first profile. Keep it clean, factual, and curr
 Edit:
 
 ```text
-Career-Ops/profiles/resume-1/article-digest.md
+Resume-Workspace/profiles/resume-1/article-digest.md
 ```
 
 Use this file for reusable career evidence:
@@ -59,13 +59,13 @@ Each resume profile has its own `article-digest.md`, so users can keep different
 Create `.env` from the example file:
 
 ```powershell
-Copy-Item career-ops-web\.env.example career-ops-web\.env
+Copy-Item personal-resume-helper-web\.env.example personal-resume-helper-web\.env
 ```
 
 Edit:
 
 ```text
-career-ops-web/.env
+personal-resume-helper-web/.env
 ```
 
 Set:
@@ -73,14 +73,16 @@ Set:
 ```env
 GEMINI_API_KEY=your_google_ai_studio_key_here
 GEMINI_MODEL=gemini-2.5-flash-lite
-CAREER_OPS_PATH=../Career-Ops
+RESUME_WORKSPACE_PATH=../Resume-Workspace
 PORT=3025
 ```
+
+Existing private installs that still set `CAREER_OPS_PATH` continue to work as a fallback, but new setups should use `RESUME_WORKSPACE_PATH`.
 
 ## 6. Start The App
 
 ```powershell
-cd career-ops-web
+cd personal-resume-helper-web
 npm start
 ```
 
@@ -113,10 +115,10 @@ The public app labels are generic:
 Each profile has its own folder:
 
 ```text
-Career-Ops/profiles/resume-1/cv.md
-Career-Ops/profiles/resume-1/article-digest.md
-Career-Ops/profiles/resume-2/cv.md
-Career-Ops/profiles/resume-2/article-digest.md
+Resume-Workspace/profiles/resume-1/cv.md
+Resume-Workspace/profiles/resume-1/article-digest.md
+Resume-Workspace/profiles/resume-2/cv.md
+Resume-Workspace/profiles/resume-2/article-digest.md
 ```
 
 Use more profiles when you want separate resume variants, such as one for data engineering, one for analytics, one for support, or one for leadership.
@@ -134,8 +136,8 @@ Replace the example search terms with your real identifiers. Do not publish real
 
 ## Troubleshooting
 
-If the app cannot find profile files, confirm `CAREER_OPS_PATH=../Career-Ops` and confirm the `Career-Ops/` folder exists at the repository root.
+If the app cannot find profile files, confirm `RESUME_WORKSPACE_PATH=../Resume-Workspace` and confirm the `Resume-Workspace/` folder exists at the repository root.
 
-If the app starts but AI evaluation fails, confirm the Gemini API key is valid and saved in `career-ops-web/.env`.
+If the app starts but AI evaluation fails, confirm the Gemini API key is valid and saved in `personal-resume-helper-web/.env`.
 
 If port `3025` is already in use, change `PORT` in `.env`.

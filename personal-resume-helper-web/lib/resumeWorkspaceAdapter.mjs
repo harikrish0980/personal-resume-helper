@@ -6,21 +6,21 @@ import { pathToFileURL } from 'node:url';
 import { validateJobUrl } from './urlSafety.mjs';
 
 const APP_ROOT = process.cwd();
-const ROOT = resolve(process.env.CAREER_OPS_PATH || join(process.cwd(), '..', 'Career-Ops'));
+const ROOT = resolve(process.env.RESUME_WORKSPACE_PATH || process.env.CAREER_OPS_PATH || join(process.cwd(), '..', 'Resume-Workspace'));
 const JDS_DIR = join(ROOT, 'jds');
 const LEGACY_LOG_DIR = join(ROOT, 'webapp', 'storage', 'logs');
 const OUTPUT_DIR = join(ROOT, 'output');
 const CACHE_DIR = join(APP_ROOT, 'data', 'cache');
-const RUNTIME_DIR = join(APP_ROOT, 'data', 'career-ops-runtime');
+const RUNTIME_DIR = join(APP_ROOT, 'data', 'resume-workspace-runtime');
 const FALLBACK_JDS_DIR = join(RUNTIME_DIR, 'jds');
 const FALLBACK_REPORTS_DIR = join(RUNTIME_DIR, 'reports');
 const FALLBACK_OUTPUT_DIR = join(RUNTIME_DIR, 'output');
 const LOG_DIR = join(RUNTIME_DIR, 'logs');
-const PDF_TEMP_DIR = join(process.env.TEMP || process.env.TMP || APP_ROOT, 'eazy-job-apply-pdf');
+const PDF_TEMP_DIR = join(process.env.TEMP || process.env.TMP || APP_ROOT, 'personal-resume-helper-pdf');
 const REPORTLAB_RENDERER = join(APP_ROOT, 'lib', 'reportlab_resume_pdf.py');
 const JD_CACHE_DIR = join(CACHE_DIR, 'job-descriptions');
 const GEMINI_CACHE_DIR = join(CACHE_DIR, 'gemini-evaluations');
-const DEFAULT_TIMEOUT_MS = Number(process.env.CAREER_OPS_TIMEOUT_MS || 300000);
+const DEFAULT_TIMEOUT_MS = Number(process.env.RESUME_WORKSPACE_TIMEOUT_MS || 300000);
 const JD_CACHE_TTL_MS = Number(process.env.JD_CACHE_TTL_MS || 7 * 24 * 60 * 60 * 1000);
 const GEMINI_CACHE_TTL_MS = Number(process.env.GEMINI_CACHE_TTL_MS || 14 * 24 * 60 * 60 * 1000);
 const RESUME_QA_STOP_WORDS = new Set([
@@ -37,7 +37,7 @@ const KNOWN_COMPANY_ATS_WRAPPERS = [
   },
 ];
 
-export async function runCareerOpsAnalysis(input, onStatus = () => {}) {
+export async function runResumeWorkspaceAnalysis(input, onStatus = () => {}) {
   ensurePrimaryOrFallbackDir(JDS_DIR, FALLBACK_JDS_DIR);
   safeMkdir(FALLBACK_JDS_DIR);
   safeMkdir(LOG_DIR);
@@ -76,7 +76,7 @@ export async function runCareerOpsAnalysis(input, onStatus = () => {}) {
     evalResult = { reportPath, stdout: reason, stderr: rawError, logPath };
   }
 
-  const report = evalResult.reportPath ? parseCareerOpsReport(evalResult.reportPath) : {};
+  const report = evalResult.reportPath ? parseResumeWorkspaceReport(evalResult.reportPath) : {};
   const fallback = heuristicSummary(jdText, input.jobUrl);
   const company = firstUseful(report.company, evalResult.company, fallback.company);
   const title = firstUseful(report.title, evalResult.title, fallback.title);
@@ -403,7 +403,7 @@ async function safeFetch(url, options = {}, redirectCount = 0) {
     ...options,
     redirect: 'manual',
     headers: {
-      'user-agent': 'Career-Ops-WebApp/0.1',
+      'user-agent': 'Resume Workspace-WebApp/0.1',
       ...(options.headers || {}),
     },
   });
@@ -446,7 +446,7 @@ async function runGeminiEvaluator(jdPath, runId) {
   }
 
   if (!existsSync(join(ROOT, 'gemini-eval.mjs'))) {
-    const message = 'Career-Ops Gemini evaluator is not installed in the local Career-Ops folder. Created a local fallback report instead.';
+    const message = 'Resume Workspace Gemini evaluator is not installed in the local Resume Workspace folder. Created a local fallback report instead.';
     const reportPath = createFallbackReport(jdPath, message);
     const logPath = join(LOG_DIR, `${runId}.log`);
     writeTextFile(logPath, message);
@@ -474,7 +474,7 @@ async function runGeminiEvaluator(jdPath, runId) {
   writeTextFile(logPath, `COMMAND: ${process.execPath} ${args.join(' ')}\n\nSTDOUT:\n${stdout}\n\nSTDERR:\n${stderr}`);
 
   if (code !== 0) {
-    throw new Error(stderr.trim() || stdout.trim() || `Career-Ops evaluator exited with code ${code}`);
+    throw new Error(stderr.trim() || stdout.trim() || `Resume Workspace evaluator exited with code ${code}`);
   }
 
   const reportPath = findNewestReport(before);
@@ -501,7 +501,7 @@ function hasUsableGeminiApiKey(value = '') {
   return !/^(your_|replace_|changeme|example_|test_|dummy_|placeholder)/i.test(key);
 }
 
-export function parseCareerOpsReport(reportPath) {
+export function parseResumeWorkspaceReport(reportPath) {
   if (!reportPath || !existsSync(reportPath)) return {};
   const text = readFileSync(reportPath, 'utf-8');
   const titleLine = text.match(/^#\s*Evaluation:\s*(.+?)\s*(?:--|Ã¢â‚¬â€|-)\s*(.+)$/m);
@@ -2822,7 +2822,7 @@ function buildResumeTailoringQa(html, result, context = {}) {
     ? 'strong_match'
     : score >= 65 ? 'review_recommended' : 'needs_review';
   const checks = [
-    `Resume profile used: ${context.resumeProfileLabel || context.resumeProfileId || 'Career-Ops cv.md'}`,
+    `Resume profile used: ${context.resumeProfileLabel || context.resumeProfileId || 'Resume Workspace cv.md'}`,
     `JD keyword coverage: ${matchedTerms.length}/${requiredTerms.length || 0}`,
     missingExperience
       ? 'Resume profile parsing warning: no client work experience was parsed from cv.md'
@@ -3040,7 +3040,7 @@ function digestProjectsForTarget(articleDigest = '', result = {}, context = {}) 
   const candidates = [
     {
       pattern: /## 5\)[\s\S]*?(?=\n## 6\)|$)/m,
-      title: 'EaZy Job Apply - AI Career Operations Assistant',
+      title: 'Personal Resume Helper - AI Career Operations Assistant',
       tech: 'Node.js, JavaScript, Google Gemini API, LLM workflows, resume QA, native PDF generation',
       github: 'https://github.com/harikrish0980/Eazy-Job-Apply',
       shouldUse: useEazyProject,
@@ -3228,7 +3228,7 @@ function createFallbackReport(jdPath, reason, sourceUrl = '') {
 **Score:** ${summary.score}/5
 **Legitimacy:** Needs Review
 **PDF:** pending
-**Tool:** Career-Ops Web App fallback
+**Tool:** Personal Resume Helper Web App fallback
 
 ---
 
@@ -3265,7 +3265,7 @@ function heuristicSummary(jdText, url = '') {
     company,
     title,
     score: skills.length >= 8 ? 4.1 : skills.length >= 5 ? 3.7 : 3.2,
-    summary: `Initial local analysis found ${skills.length} recognizable technical keywords. Add GEMINI_API_KEY for the full Career-Ops A-G evaluation.`,
+    summary: `Initial local analysis found ${skills.length} recognizable technical keywords. Add GEMINI_API_KEY for the full Resume Workspace A-G evaluation.`,
     matchingSkills: skills.slice(0, 8),
     missingSkills: ['Review job-specific requirements manually', 'Confirm sponsorship/location constraints'],
     risks: ['This is a fallback analysis, not the full AI evaluation.', 'URL-only pages may require pasted job description text.'],
@@ -3355,7 +3355,7 @@ function englishSummary({ company, title, score, recommendation, fallbackSummary
     if (cleanFallback && isMostlyEnglish(cleanFallback) && !looksLikeGenericRunSummary(cleanFallback)) return cleanFallback;
   }
   const scoreText = Number.isFinite(Number(score)) ? ` with a score of ${Number(score)}/5` : '';
-  return `Career-Ops completed an English-ready evaluation for ${cleanTitle} at ${cleanCompany}${scoreText}. Recommendation: ${cleanRecommendation}. Review the run detail for matching skills, gaps, risks, report, resume PDF, and apply link.`;
+  return `Resume Workspace completed an English-ready evaluation for ${cleanTitle} at ${cleanCompany}${scoreText}. Recommendation: ${cleanRecommendation}. Review the run detail for matching skills, gaps, risks, report, resume PDF, and apply link.`;
 }
 
 function looksLikeGenericRunSummary(value) {

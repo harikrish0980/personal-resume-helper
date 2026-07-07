@@ -10,18 +10,19 @@ __pycache__/
 *.pyc
 
 # Local app state and generated artifacts
-career-ops-web/data/
-career-ops-web/storage/
-career-ops-web/.env
-career-ops-web/node_modules/
-career-ops-web/.playwright-cli/
-career-ops-web/node-write-test.txt
+personal-resume-helper-web/data/
+personal-resume-helper-web/storage/
+personal-resume-helper-web/.env
+personal-resume-helper-web/node_modules/
+personal-resume-helper-web/.playwright-cli/
+personal-resume-helper-web/node-write-test.txt
 graphify-out/
-career-ops-web/graphify-out/
+personal-resume-helper-web/graphify-out/
 project-map/
-career-ops-web/tools/__pycache__/
+personal-resume-helper-web/tools/__pycache__/
 
-# Private Career-Ops workspace data
+# Private workspace data
+/Resume-Workspace/
 /Career-Ops/
 
 # Local extraction/temporary folders
@@ -33,7 +34,7 @@ New folder/
 *.bak
 *.tmp
 rollback-backup-*/
-career-ops-web/scripts/
+personal-resume-helper-web/scripts/
 
 # OS/editor noise
 .DS_Store

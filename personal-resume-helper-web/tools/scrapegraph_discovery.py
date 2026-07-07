@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Local ScrapeGraphAI sidecar for EaZy Job Apply discovery.
+"""Local ScrapeGraphAI sidecar for Personal Resume Helper discovery.
 
 Reads JSON from stdin and writes one JSON object to stdout. The Node app owns
 URL safety, scoring, dedupe, and persistence; this sidecar only extracts

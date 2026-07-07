@@ -10,7 +10,7 @@ User profile + resume
         ↓
 Latest matching jobs
         ↓
-Career-Ops scoring
+Resume Workspace scoring
         ↓
 Tailored resume / PDF
         ↓
@@ -22,17 +22,17 @@ Follow-up / interview prep
 
 
 Idea: 
-I want to build a web application on top of my existing Career-Ops setup.
+I want to build a web application on top of my existing Resume Workspace setup.
 
 Context:
 I am an IT employee searching for a new job. I want an application that helps me find matching jobs, analyze them, generate tailored resumes, save jobs, and track applications.
 
-I already have Career-Ops set up and working locally in this repository/environment. Career-Ops can take a job link or job ID, analyze the job, generate a result/report, and create a tailored resume PDF.
+I already have Resume Workspace set up and working locally in this repository/environment. Resume Workspace can take a job link or job ID, analyze the job, generate a result/report, and create a tailored resume PDF.
 
 Now I want to build a user-friendly web app so I do not need to paste job links into CLI or Codex manually.
 
 Main goal:
-Build a web app where I can paste a job link, click Analyze, and the backend runs Career-Ops in the background. When it finishes, the app should show the match score, recommendation, report, generated resume PDF, and apply link.
+Build a web app where I can paste a job link, click Analyze, and the backend runs Resume Workspace in the background. When it finishes, the app should show the match score, recommendation, report, generated resume PDF, and apply link.
 
 Design reference:
 I have attached screenshots for the starting UI idea.
@@ -62,7 +62,7 @@ Otherwise use:
 - PostgreSQL or SQLite for local development
 - BullMQ + Redis for background jobs
 - Node.js worker
-- Existing Career-Ops as the backend engine
+- Existing Resume Workspace as the backend engine
 
 Main user flow:
 1. User opens the app.
@@ -71,14 +71,14 @@ Main user flow:
 4. User optionally pastes the job description.
 5. User clicks Analyze Job.
 6. Backend creates a JobRun record with status "queued".
-7. Background worker runs Career-Ops.
-8. Career-Ops generates analysis/report/tailored resume PDF.
+7. Background worker runs Resume Workspace.
+8. Resume Workspace generates analysis/report/tailored resume PDF.
 9. Backend saves the result.
 10. UI shows status updates.
 11. When complete, user can view score, report, resume PDF, and apply link.
 12. User can save the job to the application tracker.
 
-Do not run Career-Ops directly inside the HTTP request.
+Do not run Resume Workspace directly inside the HTTP request.
 Use a background queue so the browser does not hang.
 
 Pages to build:
@@ -130,7 +130,7 @@ When completed show:
 - matching skills
 - missing skills
 - risks
-- Career-Ops report
+- Resume Workspace report
 - tailored resume PDF download/view link
 - apply link
 
@@ -202,7 +202,7 @@ Each application card should show:
 Show generated documents:
 - tailored resume PDFs
 - resume markdown files
-- Career-Ops reports
+- Resume Workspace reports
 - cover letters
 - recruiter messages
 - interview prep notes
@@ -232,7 +232,7 @@ Domain: FinTech
 
 8. Settings page
 Include:
-- Career-Ops path
+- Resume Workspace path
 - storage path
 - API keys/config if needed
 - queue/worker status
@@ -249,12 +249,12 @@ Create APIs for:
 - GET /api/profile
 - PATCH /api/profile
 
-Career-Ops integration:
-Create a module called careerOpsAdapter.
+Resume Workspace integration:
+Create a module called resumeWorkspaceAdapter.
 
 It should expose:
-- runCareerOpsAnalysis(input)
-- parseCareerOpsOutput(output)
+- runResumeWorkspaceAnalysis(input)
+- parseResumeWorkspaceOutput(output)
 - findGeneratedArtifacts(input)
 
 Expected adapter output:
@@ -273,14 +273,14 @@ Expected adapter output:
   "applyUrl": "https://example.com/apply"
 }
 
-If Career-Ops does not currently return JSON, create a wrapper script that:
-1. Runs Career-Ops
+If Resume Workspace does not currently return JSON, create a wrapper script that:
+1. Runs Resume Workspace
 2. Reads the generated output/report files
 3. Extracts structured data
 4. Returns JSON to the app
 
 Example wrapper command:
-node scripts/run-career-ops-job.mjs --url "https://company.com/job/123" --json
+node scripts/run-resume-workspace-job.mjs --url "https://company.com/job/123" --json
 
 Security rules:
 - Use child_process.spawn, not exec with shell strings
@@ -290,7 +290,7 @@ Security rules:
 - Block localhost URLs
 - Block private IP ranges
 - Block metadata IP 169.254.169.254
-- Add timeout for Career-Ops runs
+- Add timeout for Resume Workspace runs
 - Save stdout/stderr logs
 - Show useful error messages in UI
 - Do not auto-submit applications
@@ -332,7 +332,7 @@ Application statuses:
 
 Future job discovery:
 Prepare the app so later we can add automatic job discovery from:
-- Career-Ops scan
+- Resume Workspace scan
 - Greenhouse public job boards
 - Lever postings
 - Ashby postings
@@ -341,12 +341,12 @@ Prepare the app so later we can add automatic job discovery from:
 - manual job links
 
 For now, focus on Phase 1:
-Manual Add Job → Career-Ops background run → result/report/PDF → save to tracker.
+Manual Add Job → Resume Workspace background run → result/report/PDF → save to tracker.
 
 Acceptance criteria:
 - I can paste a job URL and click Analyze Job.
 - The HTTP request returns quickly with a run ID.
-- Career-Ops runs in the background.
+- Resume Workspace runs in the background.
 - The UI shows queued/running/completed/failed status.
 - I can refresh the run detail page and see the latest status.
 - When completed, I can see score, recommendation, report, and generated resume PDF.
@@ -354,11 +354,11 @@ Acceptance criteria:
 - I can view saved/applied jobs in a Kanban board.
 - Failed runs show useful error messages and logs.
 - Code is typed, clean, reusable, and easy to extend.
-- Do not break the existing Career-Ops setup.
+- Do not break the existing Resume Workspace setup.
 
 Before coding:
 1. Inspect the existing repository structure.
-2. Identify how Career-Ops is currently run.
+2. Identify how Resume Workspace is currently run.
 3. Propose a short implementation plan.
 4. Then implement Phase 1.
 
@@ -382,7 +382,7 @@ Requirements:
    - companies to avoid
 
 2. Add job source connectors:
-   - Career-Ops scan
+   - Resume Workspace scan
    - Greenhouse public job boards
    - Lever postings API
    - Ashby public postings
@@ -397,7 +397,7 @@ Requirements:
    - external ATS job ID
    - description similarity if needed
 
-5. Add quick match scoring before running Career-Ops.
+5. Add quick match scoring before running Resume Workspace.
 Quick score should consider:
    - title match
    - skills match
@@ -408,7 +408,7 @@ Quick score should consider:
    - job freshness
    - excluded keywords
 
-6. Only run Career-Ops deep analysis for jobs above a configurable score threshold.
+6. Only run Resume Workspace deep analysis for jobs above a configurable score threshold.
 
 7. Update the Job Board page to show:
    - New today
@@ -434,21 +434,21 @@ The user should still review and apply manually.
 
 project.
 
-# Career-Ops Web App
+# Personal Resume Helper Web App
 
-A web application built on top of an existing **Career-Ops** setup.
+A web application built on top of an existing **Resume Workspace** setup.
 
 This app helps an IT employee searching for a new job by:
 
 - Finding latest matching jobs
-- Analyzing job fit using Career-Ops
+- Analyzing job fit using Resume Workspace
 - Generating tailored resume PDFs
 - Saving matching jobs
 - Tracking applications
 - Managing generated documents
 - Preparing application information in one place
 
-The goal is to avoid using CLI/Codex manually every time. Instead, the user can paste a job link in the web app, and the backend will run Career-Ops in the background.
+The goal is to avoid using CLI/Codex manually every time. Instead, the user can paste a job link in the web app, and the backend will run Resume Workspace in the background.
 
 ---
 
@@ -493,7 +493,7 @@ The backend should:
 
 1. Create a job run
 2. Queue the job
-3. Run Career-Ops in the background
+3. Run Resume Workspace in the background
 4. Generate job evaluation
 5. Generate tailored resume PDF
 6. Save report and generated documents
@@ -508,9 +508,9 @@ Backend creates JobRun
         ↓
 Queue starts background worker
         ↓
-Worker runs Career-Ops
+Worker runs Resume Workspace
         ↓
-Career-Ops generates result and PDF
+Resume Workspace generates result and PDF
         ↓
 App saves output
         ↓
@@ -591,7 +591,7 @@ Document types:
 
 Tailored resume PDF
 Tailored resume Markdown
-Career-Ops report
+Resume Workspace report
 Cover letter
 Recruiter message
 Application answers
@@ -709,7 +709,7 @@ Summary
 Matching skills
 Missing skills
 Risks
-Career-Ops report
+Resume Workspace report
 Tailored resume PDF
 Apply link
 
@@ -815,7 +815,7 @@ Queue: BullMQ
 Queue Backend: Redis
 Worker: Node.js
 Storage: Local disk for MVP, S3 later
-Automation Engine: Existing Career-Ops
+Automation Engine: Existing Resume Workspace
 Browser Automation: Playwright
 
 Architecture:
@@ -830,15 +830,15 @@ Redis Queue
         ↓
 Worker Service
         ↓
-Career-Ops Adapter
+Resume Workspace Adapter
         ↓
-Career-Ops Project
+Resume Workspace Project
         ↓
 Reports / PDFs
 
 Important rule:
 
-Do not run Career-Ops directly inside an HTTP request.
+Do not run Resume Workspace directly inside an HTTP request.
 
 Correct approach:
 
@@ -848,23 +848,23 @@ API returns runId immediately
         ↓
 UI polls run status
         ↓
-Worker runs Career-Ops in background
+Worker runs Resume Workspace in background
         ↓
 UI updates when completed
-5. Career-Ops Integration
+5. Resume Workspace Integration
 
-Career-Ops is already installed and working locally.
+Resume Workspace is already installed and working locally.
 
 The web app should not directly depend on interactive CLI behavior forever.
 
 Create an adapter module:
 
-careerOpsAdapter
+resumeWorkspaceAdapter
 
 It should expose:
 
-runCareerOpsAnalysis(input)
-parseCareerOpsOutput(output)
+runResumeWorkspaceAnalysis(input)
+parseResumeWorkspaceOutput(output)
 findGeneratedArtifacts(input)
 
 Expected result shape:
@@ -884,16 +884,16 @@ Expected result shape:
   "applyUrl": "https://example.com/apply"
 }
 
-If Career-Ops does not return JSON, add a wrapper script that:
+If Resume Workspace does not return JSON, add a wrapper script that:
 
-Runs Career-Ops
+Runs Resume Workspace
 Reads generated report/output files
 Extracts structured data
 Returns JSON
 
 Example wrapper command:
 
-node scripts/run-career-ops-job.mjs --url "https://company.com/job/123" --json
+node scripts/run-resume-workspace-job.mjs --url "https://company.com/job/123" --json
 6. Background Worker Flow
 
 When user submits a job link:
@@ -908,7 +908,7 @@ Worker picks job
         ↓
 Set status running
         ↓
-Run Career-Ops
+Run Resume Workspace
         ↓
 Set status generating_resume
         ↓
@@ -1061,7 +1061,7 @@ jobPostingId
 jobUrl
 jobDescription
 status
-careerOpsCommand
+resumeWorkspaceCommand
 rawOutput
 errorMessage
 startedAt
@@ -1097,7 +1097,7 @@ Document types:
 
 resume_pdf
 resume_markdown
-career_ops_report
+resume_workspace_report
 cover_letter
 recruiter_message
 application_answers
@@ -1220,7 +1220,7 @@ model JobRun {
   jobUrl            String
   jobDescription    String?
   status            String
-  careerOpsCommand  String?
+  resumeWorkspaceCommand  String?
   rawOutput         String?
   errorMessage      String?
   startedAt         DateTime?
@@ -1327,11 +1327,11 @@ model FollowUp {
 
 Example .env:
 
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/career_ops_web"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/resume_workspace_web"
 REDIS_URL="redis://localhost:6379"
 
-CAREER_OPS_PATH="/absolute/path/to/career-ops"
-CAREER_OPS_TIMEOUT_MS="300000"
+RESUME_WORKSPACE_PATH="/absolute/path/to/resume-workspace"
+RESUME_WORKSPACE_TIMEOUT_MS="300000"
 
 APP_BASE_URL="http://localhost:3000"
 
@@ -1341,7 +1341,7 @@ LOCAL_FILE_STORAGE_PATH="./storage"
 NEXTAUTH_SECRET="change-me"
 NEXTAUTH_URL="http://localhost:3000"
 11. Suggested Folder Structure
-career-ops-web/
+personal-resume-helper-web/
   apps/
     web/
       app/
@@ -1376,11 +1376,11 @@ career-ops-web/
       prisma/
         schema.prisma
       src/
-    career-ops-adapter/
+    resume-workspace-adapter/
       src/
         index.ts
-        runCareerOpsAnalysis.ts
-        parseCareerOpsOutput.ts
+        runResumeWorkspaceAnalysis.ts
+        parseResumeWorkspaceOutput.ts
         validateJobUrl.ts
     shared/
       src/
@@ -1400,18 +1400,18 @@ Allow only https: URLs.
 Block localhost URLs.
 Block private IP ranges.
 Block cloud metadata IPs.
-Add timeout for Career-Ops runs.
+Add timeout for Resume Workspace runs.
 Save logs for debugging.
 Do not auto-submit job applications.
 
 Bad:
 
-exec(`career-ops ${jobUrl}`)
+exec(`resume-workspace ${jobUrl}`)
 
 Good:
 
-spawn("node", ["scripts/run-career-ops-job.mjs", "--url", jobUrl, "--json"], {
-  cwd: process.env.CAREER_OPS_PATH,
+spawn("node", ["scripts/run-resume-workspace-job.mjs", "--url", jobUrl, "--json"], {
+  cwd: process.env.RESUME_WORKSPACE_PATH,
   shell: false
 })
 
@@ -1430,7 +1430,7 @@ Later, the app should automatically find latest matching jobs.
 
 Recommended sources:
 
-Career-Ops scan
+Resume Workspace scan
 Greenhouse public job boards
 Lever postings API
 Ashby public job postings
@@ -1456,7 +1456,7 @@ Deduplicate jobs
         ↓
 Run quick match score
         ↓
-Run Career-Ops only on promising jobs
+Run Resume Workspace only on promising jobs
         ↓
 Show best matches in Job Board
 14. Matching Logic
@@ -1477,14 +1477,14 @@ Experience level match
 Freshness
 Avoided keywords
 
-Only run Career-Ops if quick score is good enough.
+Only run Resume Workspace if quick score is good enough.
 
 Example:
 
-Run Career-Ops only if quick score >= 70
-Level 2 — Career-Ops Deep Score
+Run Resume Workspace only if quick score >= 70
+Level 2 — Resume Workspace Deep Score
 
-Career-Ops should generate:
+Resume Workspace should generate:
 
 Overall score
 Recommendation
@@ -1587,7 +1587,7 @@ First working version:
 
 Paste job link
         ↓
-Run Career-Ops in background
+Run Resume Workspace in background
         ↓
 Show score/report/PDF
         ↓
@@ -1600,7 +1600,7 @@ Do not build everything at once.
 Recommended phase order:
 
 Phase 1:
-Manual Add Job → Career-Ops backend run → result + PDF
+Manual Add Job → Resume Workspace backend run → result + PDF
 
 Phase 2:
 Application tracker + documents page
@@ -1620,7 +1620,7 @@ Browser extension / autofill
 
 Use this prompt in Codex:
 
-Build a Next.js web application on top of my existing Career-Ops setup.
+Build a Next.js web application on top of my existing Resume Workspace setup.
 
 The app should look similar to the provided screenshots:
 - Left sidebar navigation
@@ -1633,7 +1633,7 @@ The app should look similar to the provided screenshots:
 Do not copy any branding from the reference site. Use it only as layout inspiration.
 
 Main goal:
-I am an IT employee searching for a new job. I want to paste a job link in the app instead of using CLI/Codex. The backend should run Career-Ops in the background, generate the job evaluation, tailored resume PDF, report, and save everything in the app.
+I am an IT employee searching for a new job. I want to paste a job link in the app instead of using CLI/Codex. The backend should run Resume Workspace in the background, generate the job evaluation, tailored resume PDF, report, and save everything in the app.
 
 Tech stack:
 - Next.js
@@ -1645,17 +1645,17 @@ Tech stack:
 - BullMQ
 - Redis
 - Node.js worker
-- Existing Career-Ops project as backend engine
+- Existing Resume Workspace project as backend engine
 
 Important:
-- Career-Ops is already installed and working locally.
-- Do not run Career-Ops inside the HTTP request.
+- Resume Workspace is already installed and working locally.
+- Do not run Resume Workspace inside the HTTP request.
 - Use a background queue.
 - Use child_process.spawn, not shell string execution.
 - Validate job URLs.
 - Block localhost, private IPs, and metadata URLs.
 - Add timeout and error handling.
-- Save logs for every Career-Ops run.
+- Save logs for every Resume Workspace run.
 - Do not auto-submit applications.
 - Human should review and apply manually.
 
@@ -1790,10 +1790,10 @@ Database models:
 - JobSource
 - FollowUp
 
-Career-Ops adapter:
-Create a module called careerOpsAdapter with:
-- runCareerOpsAnalysis(input)
-- parseCareerOpsOutput(output)
+Resume Workspace adapter:
+Create a module called resumeWorkspaceAdapter with:
+- runResumeWorkspaceAnalysis(input)
+- parseResumeWorkspaceOutput(output)
 - findGeneratedArtifacts(input)
 
 The adapter should return:
@@ -1811,12 +1811,12 @@ The adapter should return:
   "applyUrl": "..."
 }
 
-If Career-Ops currently does not return JSON, add a wrapper script around it that creates this JSON by reading the generated report/output files.
+If Resume Workspace currently does not return JSON, add a wrapper script around it that creates this JSON by reading the generated report/output files.
 
 Job discovery phase:
 Add later, but prepare the database for it.
 Sources to support later:
-- Career-Ops scan
+- Resume Workspace scan
 - Greenhouse public job boards
 - Lever postings
 - Ashby postings
@@ -1825,7 +1825,7 @@ Sources to support later:
 
 Acceptance criteria:
 - I can paste a job URL and click Analyze.
-- The page does not hang while Career-Ops runs.
+- The page does not hang while Resume Workspace runs.
 - I can refresh the run detail page and see the current status.
 - When complete, I can see score, recommendation, report, and resume PDF.
 - I can save the job to the application tracker.
@@ -1851,7 +1851,7 @@ Requirements:
    - companies to watch
 
 2. Add job source connectors:
-   - Career-Ops scan
+   - Resume Workspace scan
    - Greenhouse job board API
    - Lever postings API
    - Ashby public postings
@@ -1863,9 +1863,9 @@ Requirements:
 
 5. Add freshness scoring.
 
-6. Run quick match scoring before expensive Career-Ops analysis.
+6. Run quick match scoring before expensive Resume Workspace analysis.
 
-7. Only run Career-Ops on jobs above threshold.
+7. Only run Resume Workspace on jobs above threshold.
 
 8. Show dashboard section:
    - New today
@@ -1885,7 +1885,7 @@ Requirements:
 The app is successful when:
 
 User can paste a job link
-Backend runs Career-Ops in background
+Backend runs Resume Workspace in background
 Browser does not hang
 User can refresh status page
 Completed run shows score, report, recommendation, and PDF

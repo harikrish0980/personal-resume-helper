@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
-const CAREER_OPS_ROOT = resolve(process.env.CAREER_OPS_PATH || join(process.cwd(), '..', 'Career-Ops'));
-const APPLICATIONS_PATH = join(CAREER_OPS_ROOT, 'data', 'applications.md');
+const RESUME_WORKSPACE_ROOT = resolve(process.env.RESUME_WORKSPACE_PATH || process.env.CAREER_OPS_PATH || join(process.cwd(), '..', 'Resume-Workspace'));
+const APPLICATIONS_PATH = join(RESUME_WORKSPACE_ROOT, 'data', 'applications.md');
 
 export function parseApplicationsTracker() {
   if (!existsSync(APPLICATIONS_PATH)) return [];
@@ -34,7 +34,7 @@ export function appendTrackerEntry(result, applicationStatus = 'Resume Ready') {
   const reportCell = reportPath ? `[${String(nextNumber).padStart(3, '0')}](${reportPath.replaceAll('\\', '/')})` : 'No';
   const pdfCell = pdfPath ? 'Yes' : 'No';
   const score = result.score ? `${normalizeScore(result.score)}/5` : 'Pending';
-  const notes = escapeCell(result.summary || result.recommendation || 'Created from Career-Ops Web App.');
+  const notes = escapeCell(result.summary || result.recommendation || 'Created from Personal Resume Helper Web App.');
   const line = `| ${nextNumber} | ${today} | ${escapeCell(result.company || 'Unknown')} | ${escapeCell(result.title || 'Unknown role')} | ${score} | ${applicationStatus} | ${pdfCell} | ${reportCell} | ${notes} |\n`;
 
   let text = existsSync(APPLICATIONS_PATH) ? readFileSync(APPLICATIONS_PATH, 'utf-8') : defaultTracker();
@@ -57,7 +57,7 @@ function defaultTracker() {
 function normalizeRelative(filePath) {
   if (!filePath) return '';
   if (!filePath.includes(':') && !filePath.startsWith('/')) return filePath;
-  return relative(CAREER_OPS_ROOT, filePath);
+  return relative(RESUME_WORKSPACE_ROOT, filePath);
 }
 
 function normalizeScore(score) {

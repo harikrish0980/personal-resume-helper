@@ -1,15 +1,15 @@
 ---
-name: eazy-job-apply-builder
-description: Project workflow for building, debugging, and QA-ing EaZy Job Apply, the local web app built on a Career-Ops based engine.
+name: personal-resume-helper-builder
+description: Project workflow for building, debugging, and QA-ing Personal Resume Helper, the local web app built on a Resume Workspace based engine.
 ---
 
-# EaZy Job Apply Builder Skill
+# Personal Resume Helper Builder Skill
 
-Use this skill when helping build, debug, document, or plan EaZy Job Apply.
+Use this skill when helping build, debug, document, or plan Personal Resume Helper.
 
 ## What This Project Is
 
-EaZy Job Apply is a local-first web application for job search operations.
+Personal Resume Helper is a local-first web application for job search operations.
 
 Core flow:
 
@@ -25,11 +25,11 @@ Never auto-submit applications. The final apply step is always manual and human-
 
 ## Naming And Ownership
 
-- Product name: EaZy Job Apply.
-- Current engine/base folder: `Career-Ops`.
-- Treat Career-Ops as the local engine dependency until a planned migration is done.
-- Do not casually rename the `Career-Ops` folder because `CAREER_OPS_PATH`, output paths, scanner files, reports, profile sources, and document links depend on it.
-- User-facing docs/UI should prefer EaZy Job Apply.
+- Product name: Personal Resume Helper.
+- Current engine/base folder: `Resume-Workspace`.
+- Treat Resume Workspace as the local engine dependency until a planned migration is done.
+- Do not casually rename the `Resume-Workspace` folder because `RESUME_WORKSPACE_PATH`, output paths, scanner files, reports, profile sources, and document links depend on it.
+- User-facing docs/UI should prefer Personal Resume Helper.
 - Internal folder rename should be a separate tested migration.
 
 ## Stack
@@ -39,30 +39,30 @@ Never auto-submit applications. The final apply step is always manual and human-
 | Backend | Node.js `http` server in `server.mjs` using ES Modules |
 | Frontend | Vanilla JS, HTML, CSS in `public/` |
 | AI / Evaluation | Google Gemini API with local fallback |
-| Resume Sources | Markdown profile files inside `Career-Ops/profiles`, each with its own `article-digest.md` |
-| PDF/DOCX | Native local renderer from `careerOpsAdapter.mjs` and `reportlab_resume_pdf.py` |
+| Resume Sources | Markdown profile files inside `Resume-Workspace/profiles`, each with its own `article-digest.md` |
+| PDF/DOCX | Native local renderer from `resumeWorkspaceAdapter.mjs` and `reportlab_resume_pdf.py` |
 | State / Storage | Local JSON through `lib/store.mjs` |
-| Scanner Inbox | Career-Ops pipeline/API rows, not old Discovery Jobs |
+| Scanner Inbox | Resume Workspace pipeline/API rows, not old Discovery Jobs |
 | App Tracking | Local Applications workflow |
 | URL Safety | `lib/urlSafety.mjs` |
 
 ## Project Map
 
 - Root: repository root
-- Web app: `career-ops-web`
-- Engine/private data: `Career-Ops`
+- Web app: `personal-resume-helper-web`
+- Engine/private data: `Resume-Workspace`
 - Main app URL: `http://127.0.0.1:3025`
-- Server: `career-ops-web\server.mjs`
-- Frontend: `career-ops-web\public\index.html`, `public\app.js`, `public\styles.css`
-- Adapter: `career-ops-web\lib\careerOpsAdapter.mjs`
-- State: `career-ops-web\lib\store.mjs`
-- Resume profiles: `Career-Ops\profiles`
-- Per-profile digest: `Career-Ops\profiles\<profile>\article-digest.md`
-- Generated output: `Career-Ops\output`
-- Reports: `Career-Ops\reports`
-- Scanner pipeline: `Career-Ops\data\pipeline.md`
+- Server: `personal-resume-helper-web\server.mjs`
+- Frontend: `personal-resume-helper-web\public\index.html`, `public\app.js`, `public\styles.css`
+- Adapter: `personal-resume-helper-web\lib\resumeWorkspaceAdapter.mjs`
+- State: `personal-resume-helper-web\lib\store.mjs`
+- Resume profiles: `Resume-Workspace\profiles`
+- Per-profile digest: `Resume-Workspace\profiles\<profile>\article-digest.md`
+- Generated output: `Resume-Workspace\output`
+- Reports: `Resume-Workspace\reports`
+- Scanner pipeline: `Resume-Workspace\data\pipeline.md`
 
-Keep web-app changes in `career-ops-web`. Keep engine/profile/output changes inside `Career-Ops`.
+Keep web-app changes in `personal-resume-helper-web`. Keep engine/profile/output changes inside `Resume-Workspace`.
 
 ## Environment
 
@@ -70,7 +70,7 @@ Use:
 
 ```env
 GEMINI_API_KEY=your_key_here
-CAREER_OPS_PATH=..\Career-Ops
+RESUME_WORKSPACE_PATH=..\Resume-Workspace
 PORT=3025
 ```
 
@@ -140,7 +140,7 @@ Scanner Inbox is the safe replacement for old Discovery Jobs.
 
 Preferred flow:
 
-1. Career-Ops scanner/API writes rows to pipeline/history.
+1. Resume Workspace scanner/API writes rows to pipeline/history.
 2. Web app reads saved rows.
 3. Fresh direct ATS/company rows appear first.
 4. User reviews and chooses Analyze, Hide, or Open Link.
@@ -165,7 +165,7 @@ If Gemini quota/API/local process fails, create a useful fallback report when po
 
 ## Development Commands
 
-From `career-ops-web`:
+From `personal-resume-helper-web`:
 
 ```powershell
 npm run check
@@ -174,7 +174,7 @@ npm run check
 Start app:
 
 ```powershell
-Start-Process -FilePath 'node' -ArgumentList 'server.mjs' -WorkingDirectory 'career-ops-web' -WindowStyle Hidden
+Start-Process -FilePath 'node' -ArgumentList 'server.mjs' -WorkingDirectory 'personal-resume-helper-web' -WindowStyle Hidden
 ```
 
 Check port:

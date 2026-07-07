@@ -1,0 +1,13 @@
+{
+  "name": "personal-resume-helper-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first web app wrapper for Resume Workspace",
+  "type": "module",
+  "scripts": {
+    "web": "node server.mjs",
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check lib/resumeWorkspaceAdapter.mjs && node --check lib/discovery.mjs && node --check lib/store.mjs && node --check lib/urlSafety.mjs && node --check public/app.js"
+  },
+  "dependencies": {}
+}

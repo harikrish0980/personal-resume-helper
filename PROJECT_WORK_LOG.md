@@ -4,7 +4,7 @@ Last updated: 2026-06-30
 
 ## Project Idea
 
-EaZy Job Apply is a local-first web application for job search operations. It started as a web layer on top of the existing Career-Ops CLI project, then grew into a practical command center for analyzing jobs, generating role-specific resumes, tracking documents, reviewing scanner results, and managing manual applications.
+Personal Resume Helper is a local-first web application for job search operations. It started as a web layer on top of the existing Resume Workspace CLI project, then grew into a practical command center for analyzing jobs, generating role-specific resumes, tracking documents, reviewing scanner results, and managing manual applications.
 
 The goal is to help an IT/data professional apply more efficiently without auto-submitting applications or losing control of private resume data.
 
@@ -27,7 +27,7 @@ Final apply remains manual and human-reviewed.
 
 ## Base Used
 
-The project uses Career-Ops as the local engine/base:
+The project uses Resume Workspace as the local engine/base:
 
 - Gemini evaluation workflow
 - source resume files
@@ -36,15 +36,15 @@ The project uses Career-Ops as the local engine/base:
 - scanner pipeline/history
 - generated output folders
 
-EaZy Job Apply adds the local web app, multi-profile resume flow, document management, scanner inbox, application tracker, native PDF/DOCX generation, and local QA around resume tailoring.
+Personal Resume Helper adds the local web app, multi-profile resume flow, document management, scanner inbox, application tracker, native PDF/DOCX generation, and local QA around resume tailoring.
 
 ## Current Architecture
 
 ```text
 User
-  -> EaZy Job Apply web UI
+  -> Personal Resume Helper web UI
   -> Node.js local backend
-  -> Career-Ops adapter
+  -> Resume Workspace adapter
   -> selected resume profile cv.md
   -> shared article-digest.md
   -> Gemini evaluation or local fallback
@@ -54,12 +54,12 @@ User
 
 Important folders:
 
-- `career-ops-web`: web app and API routes
-- `Career-Ops`: engine/private data/output
-- `Career-Ops/profiles`: role-specific `cv.md` files
-- `Career-Ops/article-digest.md`: shared experience bank
-- `Career-Ops/output`: generated resumes and documents
-- `career-ops-web/data`: local app state, cache, logs, runtime files
+- `personal-resume-helper-web`: web app and API routes
+- `Resume Workspace`: engine/private data/output
+- `Resume-Workspace/profiles`: role-specific `cv.md` files
+- `Resume-Workspace/article-digest.md`: shared experience bank
+- `Resume-Workspace/output`: generated resumes and documents
+- `personal-resume-helper-web/data`: local app state, cache, logs, runtime files
 
 ## Main Features Built
 
@@ -128,7 +128,7 @@ Checks include:
 
 Scanner Inbox replaced old Discovery Jobs.
 
-- Reads Career-Ops pipeline/API jobs.
+- Reads Resume Workspace pipeline/API jobs.
 - Prioritizes fresh direct ATS/company rows.
 - Separates stale/review/search/history rows.
 - Supports Analyze, Hide, and Open Link.
@@ -205,7 +205,7 @@ Scanner Inbox replaced old Discovery Jobs.
 
 - Gemini quota/rate-limit errors.
 - Browser/PDF worker blocked by Windows security or local environment.
-- EPERM file-write/rename errors in JSON state and Career-Ops folders.
+- EPERM file-write/rename errors in JSON state and Resume Workspace folders.
 - Local folder naming confusion can happen if multiple copies of the repo exist.
 - Old Discovery Jobs returning random or stale jobs.
 - Scanner pipeline containing expired/search/history rows.
@@ -213,7 +213,7 @@ Scanner Inbox replaced old Discovery Jobs.
 - PDF spacing problems from inline bold keyword rendering.
 - Profile templates initially require user-provided resume text and proof points.
 - `jdTerms is not defined` runtime bug during resume generation.
-- Dirty `Career-Ops` git status and old path index-lock warning.
+- Dirty `Resume Workspace` git status and old path index-lock warning.
 
 ## Recent Validation
 
@@ -233,11 +233,11 @@ Latest validation checked:
 
 ## Rename Decision
 
-Renaming the product is a good idea. The product should be called EaZy Job Apply.
+Renaming the product is a good idea. The product should be called Personal Resume Helper.
 
-Renaming the `Career-Ops` folder right now is risky because many working paths depend on it:
+Renaming the `Resume Workspace` folder right now is risky because many working paths depend on it:
 
-- `CAREER_OPS_PATH`,
+- `RESUME_WORKSPACE_PATH`,
 - adapter code,
 - scanner files,
 - reports,
@@ -248,9 +248,9 @@ Renaming the `Career-Ops` folder right now is risky because many working paths d
 
 Recommended rename approach:
 
-1. Keep `Career-Ops` as the internal engine folder for now.
-2. Update user-facing docs/UI to say EaZy Job Apply.
-3. Later rename code variables from Career-Ops wording to neutral `engine` wording.
+1. Keep `Resume Workspace` as the internal engine folder for now.
+2. Update user-facing docs/UI to say Personal Resume Helper.
+3. Later rename code variables from Resume Workspace wording to neutral `engine` wording.
 4. Support both old and new folder names during migration.
 5. Rename folder only after full tests pass.
 

@@ -1,13 +1,13 @@
 const pages = {
   dashboard: ['Dashboard', "Review today's jobs, runs, documents, and next actions."],
-  add: ['Add Job', 'Paste a job link, optional JD text, and start a background Career-Ops run.'],
-  jobs: ['Analyzed Jobs', 'Review jobs that already ran through Career-Ops analysis.'],
-  scanner: ['Scanner Inbox', 'Review jobs saved by Career-Ops scan before analysis.'],
+  add: ['Add Job', 'Paste a job link, optional JD text, and start a background Resume Workspace run.'],
+  jobs: ['Analyzed Jobs', 'Review jobs that already ran through Resume Workspace analysis.'],
+  scanner: ['Scanner Inbox', 'Review jobs saved by Resume Workspace scan before analysis.'],
   applications: ['Applications', 'Track saved jobs from resume ready through offer or archive.'],
   documents: ['Documents', 'Open generated reports and resume PDFs.'],
-  profile: ['Profile & Resume', 'Read the Career-Ops profile and resume source files.'],
+  profile: ['Profile & Resume', 'Read the Resume Workspace profile and resume source files.'],
   settings: ['Settings', 'Check local setup and integration status.'],
-  run: ['Run Detail', 'Watch one Career-Ops job analysis.'],
+  run: ['Run Detail', 'Watch one Resume Workspace job analysis.'],
 };
 
 const applicationStatuses = [
@@ -39,7 +39,7 @@ document.querySelectorAll('[data-route-jump]').forEach((button) => {
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
   document.body.classList.toggle('dark');
-  localStorage.setItem('careerOpsTheme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  localStorage.setItem('resumeWorkspaceTheme', document.body.classList.contains('dark') ? 'dark' : 'light');
 });
 
 document.getElementById('add-job-form').addEventListener('submit', submitJob);
@@ -64,7 +64,7 @@ document.getElementById('import-state-file').addEventListener('change', importSt
 document.getElementById('app-editor-close').addEventListener('click', closeApplicationEditor);
 document.getElementById('app-editor-form').addEventListener('submit', saveApplicationEditor);
 
-if (localStorage.getItem('careerOpsTheme') === 'dark') document.body.classList.add('dark');
+if (localStorage.getItem('resumeWorkspaceTheme') === 'dark') document.body.classList.add('dark');
 initLiquidGlassPointer();
 
 window.addEventListener('hashchange', () => {
@@ -123,7 +123,7 @@ async function submitJob(event) {
     showToast(message);
     return;
   }
-  if (validation) validation.textContent = 'Queueing this job for Career-Ops analysis...';
+  if (validation) validation.textContent = 'Queueing this job for Resume Workspace analysis...';
   const payload = {
     jobUrl,
     jobDescription,
@@ -165,7 +165,7 @@ function routeTo(route, options = {}) {
   document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach((button) => button.classList.toggle('active', button.dataset.route === route));
   document.getElementById(route)?.classList.add('active');
-  document.getElementById('page-title').textContent = pages[route]?.[0] || 'EaZy Job Apply';
+  document.getElementById('page-title').textContent = pages[route]?.[0] || 'Personal Resume Helper';
   document.getElementById('page-subtitle').textContent = pages[route]?.[1] || '';
   if (route === 'profile') loadProfile();
   if (route === 'scanner') loadScannerInbox();
@@ -209,7 +209,7 @@ async function renderRun(runId) {
     document.getElementById('run-detail').innerHTML = `
       <div class="panel-head">
         <div>
-          <h2>${escapeHtml(cleanDisplayText(result.resolvedCompany || result.company || 'Career-Ops Run'))} - ${escapeHtml(cleanDisplayText(result.resolvedTitle || result.title || run.status))}</h2>
+          <h2>${escapeHtml(cleanDisplayText(result.resolvedCompany || result.company || 'Resume Workspace Run'))} - ${escapeHtml(cleanDisplayText(result.resolvedTitle || result.title || run.status))}</h2>
           <span class="status ${run.status === 'failed' ? 'failed' : ''}">${escapeHtml(statusLabel(run.status))}</span>
         </div>
         <button class="secondary-btn" onclick="refreshRun('${escapeAttribute(runId)}')">Refresh Run</button>
@@ -222,7 +222,7 @@ async function renderRun(runId) {
         <article class="metric-card"><span>Resume</span><strong>${resumeArtifactStatus(result)}</strong></article>
       </div>` : ''}
       <div class="tags">
-        <span class="tag">Profile: ${escapeHtml(result.resumeProfileLabel || run.resumeProfileLabel || 'Career-Ops cv.md')}</span>
+        <span class="tag">Profile: ${escapeHtml(result.resumeProfileLabel || run.resumeProfileLabel || 'Resume Workspace cv.md')}</span>
         <span class="tag">Format: ${escapeHtml(resumeModeLabel(result.resumeMode || run.resumeMode || 'two_page'))}</span>
       </div>
       ${result.summary ? `<p>${escapeHtml(englishRunSummary(result))}</p>` : ''}
@@ -387,7 +387,7 @@ async function loadScannerInbox() {
     state.scanner = await api('/api/scanner/inbox');
     renderScannerInbox();
   } catch (error) {
-    document.getElementById('scanner-list').innerHTML = `<div class="panel"><h2>Scanner Inbox unavailable</h2><p class="muted">${escapeHtml(error.message || 'Could not load Career-Ops pipeline rows.')}</p></div>`;
+    document.getElementById('scanner-list').innerHTML = `<div class="panel"><h2>Scanner Inbox unavailable</h2><p class="muted">${escapeHtml(error.message || 'Could not load Resume Workspace pipeline rows.')}</p></div>`;
   }
 }
 
@@ -496,7 +496,7 @@ async function runApiScanner() {
     showToast(`Scanner finished. New offers added: ${added}`);
     await loadScannerInbox();
   } catch (error) {
-    showToast(error.message || 'Career-Ops scanner failed.');
+    showToast(error.message || 'Resume Workspace scanner failed.');
   } finally {
     if (button) {
       button.disabled = false;
@@ -514,7 +514,7 @@ window.analyzeScannerRow = async (rowId) => {
       method: 'POST',
       body: JSON.stringify({
         jobUrl: row.url,
-        notes: `Imported from Scanner Inbox: ${row.source || 'Career-Ops pipeline'}`,
+        notes: `Imported from Scanner Inbox: ${row.source || 'Resume Workspace pipeline'}`,
         generateResume: true,
         resumeProfileId: document.getElementById('resume-profile-select')?.value || state.profile?.defaultResumeProfileId || '',
         resumeMode: document.querySelector('input[name="resume-mode"]:checked')?.value || 'two_page',
@@ -522,7 +522,7 @@ window.analyzeScannerRow = async (rowId) => {
         saveToTracker: true,
       }),
     });
-    showToast('Scanner job queued for Career-Ops analysis.');
+    showToast('Scanner job queued for Resume Workspace analysis.');
     showRun(response.runId);
   } catch (error) {
     showToast(error.message);
@@ -532,7 +532,7 @@ window.analyzeScannerRow = async (rowId) => {
 window.hideScannerRow = async (rowId) => {
   const row = (state.scanner?.rows || []).find((item) => item.id === rowId);
   if (!row) return showToast('Scanner row not found.');
-  if (!confirm(`Hide ${row.company || 'this company'} - ${row.title || 'this scanner row'} from Scanner Inbox? Career-Ops files stay untouched.`)) return;
+  if (!confirm(`Hide ${row.company || 'this company'} - ${row.title || 'this scanner row'} from Scanner Inbox? Resume Workspace files stay untouched.`)) return;
   try {
     await api('/api/scanner/archive', { method: 'POST', body: JSON.stringify({ id: row.id, url: row.url, company: row.company, title: row.title }) });
     await loadScannerInbox();
@@ -686,7 +686,7 @@ function renderProfileSourceSummary(profile = state.profile || {}) {
   const activeProfile = profile.activeResumeProfile || {};
   const profiles = profile.resumeProfiles || [];
   document.getElementById('profile-source-summary').innerHTML = `
-    <div class="list-row"><strong>Active profile</strong><span>${escapeHtml(activeProfile.label || 'Career-Ops cv.md')}</span></div>
+    <div class="list-row"><strong>Active profile</strong><span>${escapeHtml(activeProfile.label || 'Resume Workspace cv.md')}</span></div>
     <div class="list-row"><strong>Profile status</strong><span>${escapeHtml(sourceStatusLabel(activeProfile.sourceStatus || (activeProfile.isEnabled ? 'ready' : 'disabled')))}</span></div>
     <div class="list-row"><strong>Primary resume</strong><span>${escapeHtml(profile.cvPath || 'cv.md')}</span></div>
     <div class="list-row"><strong>article-digest.md</strong><span>${profile.articleDigestExists ? `Loaded for resume tailoring - ${Number(profile.articleDigestLength || 0).toLocaleString()} chars, ${Number(profile.articleDigestBulletCount || 0).toLocaleString()} bullets` : 'Not found'}</span></div>
@@ -777,7 +777,7 @@ async function loadHealth() {
   const health = await api('/api/health');
   document.getElementById('health').innerHTML = `
     <div class="list-row"><strong>Web App Root</strong><span>${escapeHtml(health.appRoot)}</span></div>
-    <div class="list-row"><strong>Career-Ops Root</strong><span>${escapeHtml(health.careerOpsRoot)}</span></div>
+    <div class="list-row"><strong>Resume Workspace Root</strong><span>${escapeHtml(health.resumeWorkspaceRoot)}</span></div>
     <div class="list-row"><strong>Node</strong><span>${escapeHtml(health.node)}</span></div>
     <div class="list-row"><strong>State Schema</strong><span>v${escapeHtml(String(health.schemaVersion || 2))}</span></div>
     <div class="list-row"><strong>Resume Snapshots</strong><span>${escapeHtml(String(health.resumeSnapshots || 0))}</span></div>
@@ -802,7 +802,7 @@ async function exportStateBackup() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `eazy-job-apply-state-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `personal-resume-helper-state-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
     showToast('State backup exported.');
@@ -842,7 +842,7 @@ window.analyzeExistingJob = async (jobId) => {
       method: 'POST',
       body: JSON.stringify({ generateResume: true, resumeProfileId, resumeMode, generateCoverLetter: false, saveToTracker: true }),
     });
-    showToast('Career-Ops analysis queued.');
+    showToast('Resume Workspace analysis queued.');
     showRun(response.runId);
   } catch (error) {
     showToast(error.message);
@@ -1199,7 +1199,7 @@ function documentTypeLabel(type = '') {
     resume_docx: 'Tailored Resume Word',
     resume_html: 'Tailored Resume HTML',
     resume_pdf_error: 'PDF Error Log',
-    career_ops_report: 'Career-Ops Report',
+    resume_workspace_report: 'Resume Workspace Report',
     cover_letter: 'Cover Letter',
   }[type] || cleanDisplayText(type).replace(/_/g, ' ') || 'Document';
 }
@@ -1260,8 +1260,8 @@ function resumeSourceLabel(source = {}) {
   const label = source.label || source.fileName || '';
   if (source.source === 'uploaded') return `Uploaded resume${label ? ` - ${label}` : ''}`;
   if (source.source === 'pasted') return `Pasted resume text${source.textLength ? ` - ${Number(source.textLength).toLocaleString()} characters` : ''}`;
-  if (source.source === 'cv_md') return `Career-Ops cv.md${source.textLength ? ` - ${Number(source.textLength).toLocaleString()} characters` : ''}`;
-  return label || 'Career-Ops cv.md';
+  if (source.source === 'cv_md') return `Resume Workspace cv.md${source.textLength ? ` - ${Number(source.textLength).toLocaleString()} characters` : ''}`;
+  return label || 'Resume Workspace cv.md';
 }
 
 function groupBy(items, keyFn) {
@@ -1390,7 +1390,7 @@ function englishSummary({ company, title, score, recommendation, summary }) {
   const titleText = cleanDisplayText(title || 'this role');
   const recommendationText = normalizeRecommendation(recommendation);
   const scoreText = normalizedScoreText(score);
-  return `Career-Ops completed the evaluation for ${titleText} at ${companyText}.${scoreText} Recommendation: ${recommendationText}. Open the run detail to review matching skills, gaps, risks, report, resume PDF, and apply link.`;
+  return `Resume Workspace completed the evaluation for ${titleText} at ${companyText}.${scoreText} Recommendation: ${recommendationText}. Open the run detail to review matching skills, gaps, risks, report, resume PDF, and apply link.`;
 }
 
 function normalizedScoreText(score) {

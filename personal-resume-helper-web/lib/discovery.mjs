@@ -20,26 +20,26 @@ const MATCH_STOP_WORDS = new Set([
 
 const DEFAULT_SOURCES = [
   {
-    id: 'career_ops_ats',
-    name: 'Career-Ops ATS Sources',
-    type: 'career_ops_ats',
+    id: 'resume_workspace_ats',
+    name: 'Resume Workspace ATS Sources',
+    type: 'resume_workspace_ats',
     category: 'Automated Direct',
     trustLevel: 'High',
     automation: 'Auto-imports direct ATS jobs',
     enabled: true,
     limit: 60,
-    notes: 'Uses Career-Ops portals.yml to scan direct Greenhouse, Ashby, and Lever company job boards.',
+    notes: 'Uses Resume Workspace portals.yml to scan direct Greenhouse, Ashby, and Lever company job boards.',
   },
   {
-    id: 'career_ops_pipeline',
-    name: 'Career-Ops Pipeline',
-    type: 'career_ops_pipeline',
-    category: 'Career-Ops Inbox',
+    id: 'resume_workspace_pipeline',
+    name: 'Resume Workspace Pipeline',
+    type: 'resume_workspace_pipeline',
+    category: 'Resume Workspace Inbox',
     trustLevel: 'Medium',
     automation: 'Auto-imports curated pipeline jobs',
     enabled: true,
     limit: 100,
-    notes: 'Imports already discovered Career-Ops pipeline jobs and applies the web app match gate.',
+    notes: 'Imports already discovered Resume Workspace pipeline jobs and applies the web app match gate.',
   },
   {
     id: 'curated_direct_ats',
@@ -193,9 +193,9 @@ export function defaultJobSources(existing = []) {
   });
 }
 
-export function guidedSearchSources(careerOpsRoot = '') {
-  const file = join(careerOpsRoot || '', 'portals.yml');
-  if (!careerOpsRoot || !existsSync(file)) return [];
+export function guidedSearchSources(resumeWorkspaceRoot = '') {
+  const file = join(resumeWorkspaceRoot || '', 'portals.yml');
+  if (!resumeWorkspaceRoot || !existsSync(file)) return [];
   const text = readFileSync(file, 'utf-8');
   const section = (text.split(/\nsearch_queries:\s*\n/)[1] || '').split(/\ntracked_companies:\s*\n/)[0] || '';
   const blocks = section.split(/\n\s*-\s+name:\s+/).slice(1);
@@ -221,7 +221,7 @@ export function guidedSearchSources(careerOpsRoot = '') {
   }).filter((source) => source.query);
 }
 
-export async function runDiscovery({ sources, profilePreferences, existingJobs = [], fetchImpl = fetch, careerOpsRoot = '', options = {} }) {
+export async function runDiscovery({ sources, profilePreferences, existingJobs = [], fetchImpl = fetch, resumeWorkspaceRoot = '', options = {} }) {
   const enabledSources = filterSourcesByScope(defaultJobSources(sources).filter((source) => source.enabled), options.sourceScope || 'balanced');
   const sourceResults = [];
   const discoveredJobs = [];
@@ -230,7 +230,7 @@ export async function runDiscovery({ sources, profilePreferences, existingJobs =
   for (const source of enabledSources) {
     const startedAt = new Date().toISOString();
     try {
-      const fetched = await fetchSource(source, profilePreferences, fetchImpl, criteria, careerOpsRoot);
+      const fetched = await fetchSource(source, profilePreferences, fetchImpl, criteria, resumeWorkspaceRoot);
       const jobs = Array.isArray(fetched) ? fetched : (fetched.jobs || []);
       const normalized = jobs.map((job) => normalizeJob(job, source, profilePreferences, criteria));
       const qualified = normalized.filter((job) => isQualifiedDiscoveryJob(job, criteria));
@@ -390,9 +390,9 @@ function discoveryDescriptionKey(job = {}) {
   return `${company}|${title}|${body}`;
 }
 
-async function fetchSource(source, profilePreferences, fetchImpl, criteria, careerOpsRoot) {
-  if (source.type === 'career_ops_ats') return fetchCareerOpsAts(source, criteria, fetchImpl, careerOpsRoot);
-  if (source.type === 'career_ops_pipeline') return fetchCareerOpsPipeline(source, criteria, careerOpsRoot);
+async function fetchSource(source, profilePreferences, fetchImpl, criteria, resumeWorkspaceRoot) {
+  if (source.type === 'resume_workspace_ats') return fetchResumeWorkspaceAts(source, criteria, fetchImpl, resumeWorkspaceRoot);
+  if (source.type === 'resume_workspace_pipeline') return fetchResumeWorkspacePipeline(source, criteria, resumeWorkspaceRoot);
   if (source.type === 'curated_direct_ats') return fetchCuratedDirectAts(source, criteria, fetchImpl);
   if (source.type === 'himalayas') return fetchHimalayas(source, criteria, fetchImpl);
   if (source.type === 'remotejobs_org') return fetchRemoteJobsOrg(source, criteria, fetchImpl);
@@ -400,8 +400,8 @@ async function fetchSource(source, profilePreferences, fetchImpl, criteria, care
   if (source.type === 'arbeitnow') return fetchArbeitnow(source, criteria, fetchImpl);
   if (source.type === 'adzuna') return fetchAdzuna(source, criteria, fetchImpl);
   if (source.type === 'remotive') return fetchRemotive(source, profilePreferences, fetchImpl, criteria);
-  if (source.type === 'scrapegraph_local') return fetchScrapeGraphLocal(source, criteria, careerOpsRoot);
-  if (source.type === 'scrapegraph_cloud') return fetchScrapeGraphCloud(source, criteria, careerOpsRoot, fetchImpl);
+  if (source.type === 'scrapegraph_local') return fetchScrapeGraphLocal(source, criteria, resumeWorkspaceRoot);
+  if (source.type === 'scrapegraph_cloud') return fetchScrapeGraphCloud(source, criteria, resumeWorkspaceRoot, fetchImpl);
   return [];
 }
 
@@ -423,8 +423,8 @@ async function fetchCuratedDirectAts(source, criteria, fetchImpl) {
   return jobs.slice(0, Number(source.limit || 80));
 }
 
-async function fetchCareerOpsAts(source, criteria, fetchImpl, careerOpsRoot) {
-  const companies = loadCareerOpsCompanies(careerOpsRoot).filter((company) => company.enabled !== false);
+async function fetchResumeWorkspaceAts(source, criteria, fetchImpl, resumeWorkspaceRoot) {
+  const companies = loadResumeWorkspaceCompanies(resumeWorkspaceRoot).filter((company) => company.enabled !== false);
   const targets = companies
     .map((company) => ({ ...company, api: detectAtsApi(company) }))
     .filter((company) => company.api)
@@ -442,16 +442,16 @@ async function fetchCareerOpsAts(source, criteria, fetchImpl, careerOpsRoot) {
   return jobs;
 }
 
-function fetchCareerOpsPipeline(source, criteria, careerOpsRoot) {
-  const file = join(careerOpsRoot || '', 'data', 'pipeline.md');
-  if (!careerOpsRoot || !existsSync(file)) return [];
+function fetchResumeWorkspacePipeline(source, criteria, resumeWorkspaceRoot) {
+  const file = join(resumeWorkspaceRoot || '', 'data', 'pipeline.md');
+  if (!resumeWorkspaceRoot || !existsSync(file)) return [];
   const lines = readFileSync(file, 'utf-8').split(/\r?\n/);
   const jobs = [];
   for (const line of lines) {
     const match = line.match(/^- \[[ x]\]\s+(https?:\/\/\S+)\s+\|\s+([^|]+)\s+\|\s+(.+)$/);
     if (!match) continue;
     const job = {
-      sourceType: 'career_ops_pipeline',
+      sourceType: 'resume_workspace_pipeline',
       sourceName: source.name,
       externalId: canonicalizeUrl(match[1]),
       title: cleanText(match[3]),
@@ -611,12 +611,12 @@ async function fetchAdzuna(source, criteria, fetchImpl) {
   }));
 }
 
-async function fetchScrapeGraphLocal(source, criteria, careerOpsRoot) {
+async function fetchScrapeGraphLocal(source, criteria, resumeWorkspaceRoot) {
   const scriptPath = join(process.cwd(), 'tools', 'scrapegraph_discovery.py');
   if (!existsSync(scriptPath)) throw new Error('Local AI Scraper worker is missing.');
-  const seedUrls = await scrapeGraphSeedUrls(source, careerOpsRoot);
+  const seedUrls = await scrapeGraphSeedUrls(source, resumeWorkspaceRoot);
   if (!seedUrls.length) {
-    throw new Error('Local AI Scraper has no approved seed URLs. Add company careers URLs in Settings or Career-Ops portals.yml.');
+    throw new Error('Local AI Scraper has no approved seed URLs. Add company careers URLs in Settings or Resume Workspace portals.yml.');
   }
   const payload = {
     query: criteria.query || 'data engineer',
@@ -660,12 +660,12 @@ async function fetchScrapeGraphLocal(source, criteria, careerOpsRoot) {
   };
 }
 
-async function fetchScrapeGraphCloud(source, criteria, careerOpsRoot, fetchImpl) {
+async function fetchScrapeGraphCloud(source, criteria, resumeWorkspaceRoot, fetchImpl) {
   const apiKey = process.env.SCRAPEGRAPH_API_KEY;
   if (!apiKey) throw new Error('Add SCRAPEGRAPH_API_KEY to .env before enabling ScrapeGraph Cloud API.');
-  const seedUrls = await scrapeGraphSeedUrls(source, careerOpsRoot);
+  const seedUrls = await scrapeGraphSeedUrls(source, resumeWorkspaceRoot);
   if (!seedUrls.length) {
-    throw new Error('ScrapeGraph Cloud API has no approved seed URLs. Add company careers URLs in Settings or Career-Ops portals.yml.');
+    throw new Error('ScrapeGraph Cloud API has no approved seed URLs. Add company careers URLs in Settings or Resume Workspace portals.yml.');
   }
   const jobs = [];
   const providerTrace = [];
@@ -847,15 +847,15 @@ function runScrapeGraphSidecar(scriptPath, payload) {
   });
 }
 
-async function scrapeGraphSeedUrls(source = {}, careerOpsRoot = '') {
+async function scrapeGraphSeedUrls(source = {}, resumeWorkspaceRoot = '') {
   const configured = String(source.seedUrls || source.query || '')
     .split(/[\r\n,]+/)
     .map((item) => item.trim())
     .filter(Boolean);
-  const careerOps = loadCareerOpsCompanies(careerOpsRoot)
+  const resumeWorkspace = loadResumeWorkspaceCompanies(resumeWorkspaceRoot)
     .filter((company) => company.enabled !== false && company.careers_url && !detectAtsApi(company))
     .map((company) => company.careers_url);
-  const candidates = [...configured, ...careerOps]
+  const candidates = [...configured, ...resumeWorkspace]
     .filter((url, index, arr) => arr.indexOf(url) === index)
     .slice(0, Number(source.maxPages || 8));
   const allowed = [];
@@ -914,7 +914,7 @@ async function fetchJsonWithTimeout(url, fetchImpl) {
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
     const response = await fetchImpl(url, {
-      headers: { accept: 'application/json', 'user-agent': 'career-ops-web/0.1' },
+      headers: { accept: 'application/json', 'user-agent': 'personal-resume-helper-web/0.1' },
       signal: controller.signal,
     });
     if (!response.ok) throw new Error(`Source returned HTTP ${response.status}`);
@@ -1034,10 +1034,10 @@ function scoreJob(job, profilePreferences = {}, criteria = {}) {
     breakdown.push('Weak title match');
   }
 
-  if (['career_ops_ats', 'career_ops_pipeline', 'curated_direct_ats', 'greenhouse', 'lever', 'ashby'].includes(job.sourceType)) {
+  if (['resume_workspace_ats', 'resume_workspace_pipeline', 'curated_direct_ats', 'greenhouse', 'lever', 'ashby'].includes(job.sourceType)) {
     factors.source = 12;
     score += factors.source;
-    breakdown.push('Direct company or Career-Ops source');
+    breakdown.push('Direct company or Resume Workspace source');
     matchReasons.push('Direct company or ATS source');
   } else if (isRemoteOnlySource(job.sourceType)) {
     factors.source = criteria.sourceScope === 'remote_boards' ? 0 : -16;
@@ -1131,7 +1131,7 @@ function scoreJob(job, profilePreferences = {}, criteria = {}) {
     breakdown.push('Needs review: weak resume-to-job evidence');
   }
 
-  if (!breakdown.length) breakdown.push('Basic discovery match; needs Career-Ops analysis.');
+  if (!breakdown.length) breakdown.push('Basic discovery match; needs Resume Workspace analysis.');
   return {
     score: Math.max(0, Math.min(100, Math.round(score))),
     breakdown,
@@ -1176,8 +1176,8 @@ function discoveryTerms(profilePreferences = {}, criteria = {}) {
 
 function filterSourcesByScope(sources, sourceScope) {
   if (sourceScope === 'all') return sources;
-  if (sourceScope === 'direct') return sources.filter((source) => ['career_ops_ats', 'career_ops_pipeline', 'curated_direct_ats'].includes(source.type));
-  if (sourceScope === 'balanced') return sources.filter((source) => ['career_ops_ats', 'career_ops_pipeline', 'curated_direct_ats', 'themuse', 'arbeitnow', 'adzuna'].includes(source.type));
+  if (sourceScope === 'direct') return sources.filter((source) => ['resume_workspace_ats', 'resume_workspace_pipeline', 'curated_direct_ats'].includes(source.type));
+  if (sourceScope === 'balanced') return sources.filter((source) => ['resume_workspace_ats', 'resume_workspace_pipeline', 'curated_direct_ats', 'themuse', 'arbeitnow', 'adzuna'].includes(source.type));
   if (sourceScope === 'mixed_boards') return sources.filter((source) => ['themuse', 'arbeitnow', 'adzuna'].includes(source.type));
   if (sourceScope === 'remote_boards') return sources.filter((source) => ['himalayas', 'remotejobs_org', 'remotive'].includes(source.type));
   if (sourceScope === 'local_ai') return sources.filter((source) => ['scrapegraph_local', 'scrapegraph_cloud'].includes(source.type));
@@ -1310,9 +1310,9 @@ function isSponsorshipCompatible(job, criteria) {
   return true;
 }
 
-function loadCareerOpsCompanies(careerOpsRoot) {
-  const file = join(careerOpsRoot || '', 'portals.yml');
-  if (!careerOpsRoot || !existsSync(file)) return [];
+function loadResumeWorkspaceCompanies(resumeWorkspaceRoot) {
+  const file = join(resumeWorkspaceRoot || '', 'portals.yml');
+  if (!resumeWorkspaceRoot || !existsSync(file)) return [];
   const text = readFileSync(file, 'utf-8');
   const companiesText = text.split(/\ntracked_companies:\s*\n/)[1] || '';
   const blocks = companiesText.split(/\n\s*-\s+name:\s+/).slice(1);
@@ -1527,8 +1527,8 @@ function sourceProviderForJob(job = {}) {
 
 function sourceTrustForJob(job = {}, source = {}) {
   if (source.trustLevel) return source.trustLevel;
-  if (['career_ops_ats', 'curated_direct_ats', 'greenhouse', 'lever', 'ashby'].includes(job.sourceType)) return 'High';
-  if (['career_ops_pipeline', 'themuse', 'arbeitnow', 'adzuna'].includes(job.sourceType)) return 'Medium';
+  if (['resume_workspace_ats', 'curated_direct_ats', 'greenhouse', 'lever', 'ashby'].includes(job.sourceType)) return 'High';
+  if (['resume_workspace_pipeline', 'themuse', 'arbeitnow', 'adzuna'].includes(job.sourceType)) return 'Medium';
   return 'Low';
 }
 

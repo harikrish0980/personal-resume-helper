@@ -272,7 +272,7 @@ function normalizeResumeSnapshot(snapshot, now) {
 
 function resumeSnapshotLabel(snapshot = {}) {
   if (snapshot.fileName) return snapshot.fileName;
-  if (snapshot.source === 'cv_md') return 'Career-Ops cv.md';
+  if (snapshot.source === 'cv_md') return 'Resume Workspace cv.md';
   return 'Discovery resume text';
 }
 
@@ -313,8 +313,8 @@ function inferSourceProvider(job) {
 
 function inferSourceTrust(job) {
   const type = job?.sourceType || '';
-  if (['career_ops_ats', 'curated_direct_ats', 'greenhouse', 'lever', 'ashby'].includes(type)) return 'High';
-  if (['career_ops_pipeline', 'arbeitnow', 'adzuna'].includes(type)) return 'Medium';
+  if (['resume_workspace_ats', 'curated_direct_ats', 'greenhouse', 'lever', 'ashby'].includes(type)) return 'High';
+  if (['resume_workspace_pipeline', 'arbeitnow', 'adzuna'].includes(type)) return 'Medium';
   if (['himalayas', 'remotejobs_org', 'remotive'].includes(type)) return 'Low';
   return '';
 }

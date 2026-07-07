@@ -2,9 +2,10 @@
 setlocal
 
 set "PROJECT_ROOT=%~dp0"
-set "APP_ROOT=%PROJECT_ROOT%career-ops-web"
-set "CAREER_OPS_PATH=%PROJECT_ROOT%Career-Ops"
-set "TEMPLATE_ROOT=%PROJECT_ROOT%templates\Career-Ops"
+set "APP_ROOT=%PROJECT_ROOT%personal-resume-helper-web"
+if not defined RESUME_WORKSPACE_PATH set "RESUME_WORKSPACE_PATH=%PROJECT_ROOT%Resume-Workspace"
+set "LEGACY_WORKSPACE_PATH=%PROJECT_ROOT%Career-Ops"
+set "TEMPLATE_ROOT=%PROJECT_ROOT%templates\Resume-Workspace"
 if not defined PORT set "PORT=3025"
 if not defined GEMINI_MODEL set "GEMINI_MODEL=gemini-2.5-flash-lite"
 
@@ -27,12 +28,15 @@ if not exist "%APP_ROOT%\server.mjs" (
   exit /b 1
 )
 
-if not exist "%CAREER_OPS_PATH%\" (
-  if exist "%TEMPLATE_ROOT%\" (
-    echo Creating private Career-Ops workspace from templates...
-    xcopy "%TEMPLATE_ROOT%" "%CAREER_OPS_PATH%" /E /I /Y >nul
+if not exist "%RESUME_WORKSPACE_PATH%\" (
+  if exist "%LEGACY_WORKSPACE_PATH%\" (
+    echo Creating private Resume-Workspace from existing Career-Ops folder...
+    xcopy "%LEGACY_WORKSPACE_PATH%" "%RESUME_WORKSPACE_PATH%" /E /I /Y >nul
+  ) else if exist "%TEMPLATE_ROOT%\" (
+    echo Creating private Resume-Workspace from templates...
+    xcopy "%TEMPLATE_ROOT%" "%RESUME_WORKSPACE_PATH%" /E /I /Y >nul
   ) else (
-    echo Missing private Career-Ops workspace and template folder.
+    echo Missing private Resume-Workspace and template folder.
     echo Expected template:
     echo %TEMPLATE_ROOT%
     pause
@@ -42,9 +46,9 @@ if not exist "%CAREER_OPS_PATH%\" (
 
 if not exist "%APP_ROOT%\.env" (
   if exist "%APP_ROOT%\.env.example" (
-    echo Creating career-ops-web\.env from .env.example...
+    echo Creating personal-resume-helper-web\.env from .env.example...
     copy "%APP_ROOT%\.env.example" "%APP_ROOT%\.env" >nul
-    echo Add your GEMINI_API_KEY in career-ops-web\.env for AI evaluation.
+    echo Add your GEMINI_API_KEY in personal-resume-helper-web\.env for AI evaluation.
   )
 )
 

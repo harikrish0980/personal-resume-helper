@@ -1,13 +1,13 @@
 # Privacy Guide
 
-EaZy Job Apply is local-first. The public repository should not contain personal resumes, application history, reports, generated documents, or API keys.
+Personal Resume Helper is local-first. The public repository should not contain personal resumes, application history, reports, generated documents, or API keys.
 
 ## Never Commit
 
-- `Career-Ops/`
-- `career-ops-web/.env`
-- `career-ops-web/data/`
-- `career-ops-web/storage/`
+- `Resume-Workspace/`
+- `personal-resume-helper-web/.env`
+- `personal-resume-helper-web/data/`
+- `personal-resume-helper-web/storage/`
 - generated PDFs, DOCX files, HTML resumes, reports, logs, and caches
 - real resumes or sample resumes from a person
 
