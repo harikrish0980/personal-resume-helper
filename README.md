@@ -35,6 +35,14 @@ The best results come from:
 6. The user starts the local web app and opens `http://127.0.0.1:3025`.
 7. The user pastes a job URL or job description, selects a resume profile, and reviews the generated outputs.
 
+## Demo
+
+![EaZy Job Apply demo](docs/assets/demo.gif)
+
+| Profile setup | Add job and review fit |
+| --- | --- |
+| ![Profile and Resume screen](docs/assets/profile-and-resume.png) | ![Add Job screen](docs/assets/add-job.png) |
+
 ## Project Layout
 
 ```text
@@ -66,11 +74,22 @@ The real `Resume-Workspace/` folder is private and ignored by Git. It is created
 
 ## Quick Start
 
+Windows PowerShell:
+
 ```powershell
-git clone <your-repo-url>
+git clone https://github.com/harikrish0980/personal-resume-helper.git
 cd personal-resume-helper
 Copy-Item -Recurse templates\Resume-Workspace Resume-Workspace
 Copy-Item personal-resume-helper-web\.env.example personal-resume-helper-web\.env
+```
+
+macOS or Linux:
+
+```bash
+git clone https://github.com/harikrish0980/personal-resume-helper.git
+cd personal-resume-helper
+cp -R templates/Resume-Workspace Resume-Workspace
+cp personal-resume-helper-web/.env.example personal-resume-helper-web/.env
 ```
 
 Edit:
@@ -83,10 +102,12 @@ personal-resume-helper-web/.env
 
 Start the app:
 
-```powershell
+```bash
 cd personal-resume-helper-web
 npm start
 ```
+
+The web app currently uses only built-in Node.js modules, so `npm install` is not required for normal local use.
 
 Open:
 

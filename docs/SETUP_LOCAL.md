@@ -11,8 +11,8 @@ EaZy Job Apply is designed to run on the user's own computer. This keeps resumes
 
 ## 1. Clone The Repository
 
-```powershell
-git clone <your-repo-url>
+```bash
+git clone https://github.com/harikrish0980/personal-resume-helper.git
 cd personal-resume-helper
 ```
 
@@ -20,8 +20,16 @@ cd personal-resume-helper
 
 Copy the safe template folder:
 
+Windows PowerShell:
+
 ```powershell
 Copy-Item -Recurse templates\Resume-Workspace Resume-Workspace
+```
+
+macOS or Linux:
+
+```bash
+cp -R templates/Resume-Workspace Resume-Workspace
 ```
 
 The new `Resume-Workspace/` folder is ignored by Git. This is where the user's private resume data, job descriptions, reports, and generated documents live.
@@ -60,8 +68,16 @@ Do not add fake achievements or AI-created points that are not supported by real
 
 Create `.env` from the example file:
 
+Windows PowerShell:
+
 ```powershell
 Copy-Item personal-resume-helper-web\.env.example personal-resume-helper-web\.env
+```
+
+macOS or Linux:
+
+```bash
+cp personal-resume-helper-web/.env.example personal-resume-helper-web/.env
 ```
 
 Edit:
@@ -83,10 +99,12 @@ Use `RESUME_WORKSPACE_PATH` for this setup. `PORT=3025` is the default local app
 
 ## 6. Start The App
 
-```powershell
+```bash
 cd personal-resume-helper-web
 npm start
 ```
+
+The app currently uses only built-in Node.js modules, so `npm install` is not required. If dependencies are added later, run `npm install` before `npm start`.
 
 Open:
 
