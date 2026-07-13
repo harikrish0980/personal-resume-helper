@@ -64,6 +64,8 @@ Each resume profile has its own `article-digest.md`, so users can keep different
 
 Do not add fake achievements or AI-created points that are not supported by real experience.
 
+For detailed examples and recommended formatting, see [PROFILE_DATA_GUIDE.md](PROFILE_DATA_GUIDE.md).
+
 ## 5. Add API Key And Settings
 
 Create `.env` from the example file:

@@ -117,6 +117,8 @@ http://127.0.0.1:3025
 
 For full setup details, see [docs/SETUP_LOCAL.md](docs/SETUP_LOCAL.md).
 
+For exact guidance on preparing `cv.md` and `article-digest.md`, see [docs/PROFILE_DATA_GUIDE.md](docs/PROFILE_DATA_GUIDE.md).
+
 ## Resume Profiles
 
 The app uses generic public labels:
